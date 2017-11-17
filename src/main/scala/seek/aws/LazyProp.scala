@@ -3,33 +3,46 @@ package seek.aws
 import groovy.lang.Closure
 import org.gradle.api.InvalidUserCodeException
 
-case class LazyProp(name: String) {
-  private var value: Any = null
-  private var result: Option[Either[Throwable, String]] = None
+private[aws] case class LazyProp[A](name: String, lookupPrefix: String, props: ProjectProps, default: Option[A] = None) {
 
-  def get: String = getEither.right.get
+  private var run: Option[Any] = None
+  private var cache: Option[Either[Throwable, A]] = None
 
-  def getOption: Option[String] = getEither.toOption
+  def get: A = getEither.right.get
 
-  def getEither: Either[Throwable, String] =
-    result match {
+  def getOption: Option[A] = getEither.toOption
+
+  def getEither: Either[Throwable, A] =
+    cache match {
       case Some(r) => r
       case None    =>
-        result = Some(
-          value match {
-            case c: Closure[_]  => Right(c.call ().toString)
-            case x if x != null => Right(x.toString)
-            case _              => Left (new InvalidUserCodeException (s"Task property '${name}' must be set"))
-          }
-        )
-        result.get
+        cache = Some(
+          run match {
+            case Some(v) => resolve(v)
+            case None    =>
+              default match {
+                case Some(v) => Right(v)
+                case None    => Left(new InvalidUserCodeException(s"Task property '${name}' must be set"))
+              }
+          })
+        cache.get
     }
 
-  def set(a: Any) = value = a
+  def set(x: Any) =
+    run = Some(x)
 
   def isEmpty: Boolean =
     getOption.isEmpty
 
   def isDefined: Boolean =
     getOption.isDefined
+
+  private def resolve(run: Any): Either[Throwable, A] =
+    try run match {
+      case c: Closure[_]     => resolve(c.call())
+      case p: LookupProperty => resolve(p.get(props, lookupPrefix))
+      case v                 => Right(v.asInstanceOf[A])
+    } catch {
+      case th: Throwable => Left(th)
+    }
 }
