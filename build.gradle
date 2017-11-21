@@ -14,15 +14,36 @@ ext {
     awsVersion = '1.11.230'
 }
 
+configurations {
+    scalaCompiler
+}
+
+configurations.scalaCompiler.transitive = false
+
+configurations.all {
+    exclude group: 'commons-logging', module: 'commons-logging'
+    exclude group: 'log4j', module: 'log4j'
+    exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
 dependencies {
     compile gradleApi()
     compile "org.scala-lang:scala-library:${scalaVersion}"
     compile "com.typesafe.scala-logging:scala-logging_${scalaBuildVersion}:3.5.0"
     compile "org.typelevel:cats-core_${scalaBuildVersion}:1.0.0-RC1"
     compile "org.typelevel:cats-effect_${scalaBuildVersion}:0.5"
+    compile "co.fs2:fs2-core_${scalaBuildVersion}:0.10.0-M8"
+    compile "com.github.mpilquist:simulacrum_${scalaBuildVersion}:0.11.0"
+//    compile "org.spire-math:kind-projector_${scalaBuildVersion}:0.9.4"
     compile "com.amazonaws:aws-java-sdk-s3:${awsVersion}"
     compile "com.amazonaws:aws-java-sdk-autoscaling:${awsVersion}"
+
+    scalaCompiler "org.scalamacros:paradise_${scalaVersion}:2.1.1"
 }
+
+String scalaCompilerOptions="-Xplugin:$configurations.scalaCompiler.singleFile.path"
+compileScala.scalaCompileOptions.additionalParameters = [scalaCompilerOptions]
+compileTestScala.scalaCompileOptions.additionalParameters = [scalaCompilerOptions]
 
 task wrapper(type: Wrapper) {
     gradleVersion = '4.3.1'
