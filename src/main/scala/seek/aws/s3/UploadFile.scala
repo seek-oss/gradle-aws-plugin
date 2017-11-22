@@ -4,6 +4,7 @@ import java.io.File
 
 import cats.effect.IO
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import org.gradle.api.GradleException
 import seek.aws.AwsTask
 
 class UploadFile extends AwsTask {
@@ -17,15 +18,24 @@ class UploadFile extends AwsTask {
   def file(v: Any): Unit = file.set(v)
 
   private val key = lazyProp[String]("key", "")
-  def prefix(v: Any): Unit = key.set(v)
+  def key(v: Any): Unit = key.set(v)
 
   private val failIfObjectExists = lazyProp[Boolean]("failIfObjectExists", false)
-  def checkExistsAndFailFast(v: Any): Unit = failIfObjectExists.set(v)
+  def failIfObjectExists(v: Any): Unit = failIfObjectExists.set(v)
 
   private val client = AmazonS3ClientBuilder.standard().withRegion(region).build()
 
   override def run: IO[Unit] =
-    (if (failIfObjectExists.get)
-      ensureNoneExist(bucket.get, List(key.get)).run(client)
-    else IO.unit).flatMap(_ => upload(bucket.get, key.get, file.get).run(client))
+    for {
+      _ <- checkFailIfObjectExists
+      _ <- upload(bucket.get, key.get, file.get).run(client)
+    } yield ()
+
+  private def checkFailIfObjectExists: IO[Unit] =
+    if (failIfObjectExists.get)
+      exists(bucket.get, key.get).run(client).flatMap {
+        case true  => IO.raiseError(new GradleException(s"Object '${key.get}' already exists in bucket '${bucket.get}'"))
+        case false => IO.unit
+      }
+    else IO.unit
 }
