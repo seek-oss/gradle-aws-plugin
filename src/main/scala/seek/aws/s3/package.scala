@@ -5,8 +5,8 @@ import java.io.File
 import cats.data.Kleisli
 import cats.effect.IO
 import com.amazonaws.AmazonServiceException
+import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{DeleteObjectsRequest, ListObjectsV2Request, S3ObjectSummary}
-import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import fs2._
 
 import scala.collection.JavaConverters._
@@ -45,8 +45,8 @@ package object s3 {
       }.run
     }
 
-  def listObjects(bucket: String, prefix: String) =
-    Kleisli[({type λ[A] = Stream[IO, A]})#λ, AmazonS3, S3ObjectSummary] { c =>
+  def listObjects(bucket: String, prefix: String): Kleisli[Stream[IO, ?], AmazonS3, S3ObjectSummary] =
+    Kleisli[Stream[IO, ?], AmazonS3, S3ObjectSummary] { c =>
       val pages = Stream.unfoldEval[IO, Option[String], Seq[S3ObjectSummary]](None) { startAfter =>
         val req = new ListObjectsV2Request()
           .withBucketName(bucket)
@@ -59,12 +59,4 @@ package object s3 {
       }
       pages.flatMap(Stream.emits(_))
     }
-}
-
-object Foo extends App {
-  private val client = AmazonS3ClientBuilder.standard().withRegion("ap-southeast-2").build()
-
-  import s3._
-
-  println(exists("seek-apply-projections-prod", "").run(client).unsafeRunSync())
 }

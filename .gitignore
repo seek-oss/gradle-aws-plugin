@@ -1,6 +1,7 @@
 target/
 build/
 classes/
+out/
 *.class
 .idea/
 .project

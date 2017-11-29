@@ -28,7 +28,7 @@ class AttachLoadBalancer extends AwsTask {
           case _ =>
             targetGroupArn.getEither match {
               case Right(targetGroupArn) => attachApplicationLoadBalancer(autoScalingGroup, targetGroupArn)
-              case _ => userCodeErrorIO("Either 'loadBalancer' or 'targetGroupArn' must be specified")
+              case _ => raiseUserCodeError("Either 'loadBalancer' or 'targetGroupArn' must be specified")
             }
         }
       case Left(th) => IO.raiseError(th)

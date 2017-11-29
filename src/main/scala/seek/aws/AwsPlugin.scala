@@ -6,6 +6,6 @@ class AwsPlugin extends Plugin[Project] {
 
   override def apply(project: Project): Unit =
     if (!project.getPlugins.hasPlugin(classOf[AwsPlugin])) {
-      project.getExtensions.create("aws", classOf[AwsPluginExtension])
+      project.getExtensions.create("aws", classOf[AwsPluginExtension], project)
     }
 }

@@ -1,9 +1,9 @@
 package seek.aws
 
 import groovy.lang.Closure
-import org.gradle.api.InvalidUserCodeException
+import org.gradle.api.{InvalidUserCodeException, Project}
 
-private[aws] case class LazyProp[A](name: String, lookupPrefix: String, props: ProjectProps, default: Option[A] = None) {
+case class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
 
   private var run: Option[Any] = None
   private var cache: Option[Either[Throwable, A]] = None
@@ -39,10 +39,22 @@ private[aws] case class LazyProp[A](name: String, lookupPrefix: String, props: P
 
   private def resolve(run: Any): Either[Throwable, A] =
     try run match {
-      case c: Closure[_]     => resolve(c.call())
-      case p: LookupProperty => resolve(p.get(props, lookupPrefix))
-      case v                 => Right(v.asInstanceOf[A])
+      case c: Closure[_] => resolve(c.call())
+      case p: Lookup     => resolve(p.run(project))
+      case v             => Right(v.asInstanceOf[A])
     } catch {
       case th: Throwable => Left(th)
     }
 }
+
+trait HasLazyProps {
+
+  def lazyProp[A](name: String)(implicit p: Project): LazyProp[A] =
+    LazyProp[A](name)(p)
+
+  def lazyProp[A](name: String, default: A)(implicit p: Project): LazyProp[A] =
+    LazyProp[A](name, Some(default))(p)
+}
+
+object HasLazyProps extends HasLazyProps
+

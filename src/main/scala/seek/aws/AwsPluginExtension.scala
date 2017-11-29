@@ -1,18 +1,21 @@
 package seek.aws
 
-import com.amazonaws.regions.Regions
+import org.gradle.api.Project
+import simulacrum.typeclass
 
-private[aws] class AwsPluginExtension {
-  private[aws] var region: Regions = Regions.AP_SOUTHEAST_2
-  private[aws] var profile: String = "default"
+class AwsPluginExtension(implicit project: Project) {
+  import HasLazyProps._
+
+  private[aws] val region = lazyProp[String]("region", "ap-southeast-2")
+  def region(v: Any): Unit = region.set(v)
+
+  private[aws] val profile = lazyProp[String]("profile", "default")
+  def profile(v: Any): Unit = profile.set(v)
+
   private[aws] var lookupPrefix: String = "environment"
+  def lookupPrefix(v: String): Unit = lookupPrefix = v
+}
 
-  def setRegion(r: String): Unit =
-    region = Regions.fromName(r)
-
-  def setProfile(p: String): Unit =
-    profile = p
-
-  def setLookupPrefix(p: String): Unit =
-    lookupPrefix = p
+@typeclass trait HasAwsPluginExtension[A] {
+  def awsExt(a: A): AwsPluginExtension
 }
