@@ -1,21 +1,8 @@
 package seek.aws
 
-import java.io.File
-import java.{lang, util}
-import java.util.concurrent.Callable
-
 import cats.effect.IO
 import groovy.lang.Closure
-import org.codehaus.groovy.runtime.GStringImpl
-import org.gradle.api.artifacts.dsl.ArtifactHandler
-import org.gradle.api.file._
-import org.gradle.api.internal.project.DefaultProject
-import org.gradle.api.plugins.{ExtensionContainer, ObjectConfigurationAction}
 import org.gradle.api._
-import org.gradle.api.internal.plugins.DefaultConvention
-import org.gradle.api.reflect.TypeOf
-import org.gradle.normalization.InputNormalizationHandler
-import org.gradle.process.{ExecSpec, JavaExecSpec}
 
 case class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
 

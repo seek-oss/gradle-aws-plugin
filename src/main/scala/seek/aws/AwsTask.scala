@@ -2,6 +2,7 @@ package seek.aws
 
 import cats.effect.IO
 import com.amazonaws.regions.Regions
+import com.amazonaws.regions.Regions.fromName
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.{DefaultTask, GradleException}
 import seek.aws.instances._
@@ -26,7 +27,7 @@ abstract class AwsTask extends DefaultTask with HasLazyProps {
 
   protected def region: IO[Regions] =
     (if (_region.isSet) _region.run
-    else project.awsExt.region.run).map(Regions.fromName)
+    else project.awsExt.region.run).map(fromName)
 
   protected def raiseError(msg: String): IO[Unit] =
     IO.raiseError(new GradleException(msg))

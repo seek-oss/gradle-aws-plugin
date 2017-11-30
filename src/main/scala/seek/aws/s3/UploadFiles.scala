@@ -53,7 +53,7 @@ class UploadFiles extends AwsTask {
 
   private def checkFailIfObjectExists(bucket: String, keys: List[String]): Kleisli[IO, AmazonS3, Unit] =
     maybeRun(failIfObjectExists, existsAny(bucket, keys),
-      raiseError(s"One or more objects already exist in bucket '${bucket}'"))
+      raiseError(s"Upload would overwrite one or more files in bucket '${bucket}'"))
 
   private def checkCleanPrefixBeforeUpload(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
     Kleisli { c =>
@@ -77,7 +77,7 @@ class UploadFiles extends AwsTask {
     files.visit(d => buf += d)
     val elems = buf.filter(e => e.getFile.isFile && e.getFile.exists).toList
     elems.foldLeft(Map.empty[String, File]) { (z, e) =>
-      z + (s"${prefix}${e.getRelativePath}" -> e.getFile)
+      z + (s"${prefix}/${e.getRelativePath}" -> e.getFile)
     }
   }
 }
