@@ -8,7 +8,7 @@ import seek.aws.AwsTask
 
 class AttachLoadBalancer extends AwsTask {
 
-  setDescription("Attaches an Auto Scaling group to a Classic or Application Load Balancer")
+  setDescription("Attaches an Auto Scaling Group to a Classic or Application Load Balancer")
 
   private val autoScalingGroup = lazyProp[String]("autoScalingGroup")
   def autoScalingGroup(v: Any): Unit = autoScalingGroup.set(v)

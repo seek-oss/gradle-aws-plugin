@@ -1,11 +1,11 @@
-package seek.aws.s3
+package seek.aws
+package s3
 
 import java.io.File
 
 import cats.data.Kleisli
 import cats.effect.IO
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
-import seek.aws.{AwsTask, LazyProp}
 
 class UploadFile extends AwsTask {
 
@@ -30,11 +30,11 @@ class UploadFile extends AwsTask {
       b <- bucket.run
       f <- file.run
       k <- key.run
-      _ <- checkFailIfObjectExists(b, k).run(c)
+      _ <- maybeFailIfObjectExists(b, k).run(c)
       _ <- upload(b, k, f).run(c)
     } yield ()
 
-  private def checkFailIfObjectExists(bucket: String, key: String): Kleisli[IO, AmazonS3, Unit] =
+  private def maybeFailIfObjectExists(bucket: String, key: String): Kleisli[IO, AmazonS3, Unit] =
     maybeRun(failIfObjectExists, exists(bucket, key),
       raiseError(s"Object '${key}' already exists in bucket '${bucket}'"))
 }

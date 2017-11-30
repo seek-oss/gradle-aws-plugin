@@ -1,4 +1,5 @@
-package seek.aws.s3
+package seek.aws
+package s3
 
 import java.io.File
 
@@ -7,7 +8,6 @@ import cats.data.Kleisli._
 import cats.effect.IO
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import org.gradle.api.file.{FileTree, FileTreeElement}
-import seek.aws.AwsTask
 
 import scala.collection.mutable
 
@@ -41,21 +41,21 @@ class UploadFiles extends AwsTask {
       p  <- prefix.run.map(_.stripSuffix("/"))
       m  <- IO.pure(keyFileMap(fs, p))
       c  <- IO.pure(AmazonS3ClientBuilder.standard().withRegion(r).build())
-      _  <- checkFailIfPrefixExists(b, p).run(c)
-      _  <- checkFailIfObjectExists(b, m.keys.toList).run(c)
-      _  <- checkCleanPrefixBeforeUpload(b, p).run(c)
+      _  <- maybeFailIfPrefixExists(b, p).run(c)
+      _  <- maybeFailIfObjectExists(b, m.keys.toList).run(c)
+      _  <- maybeCleanPrefixBeforeUpload(b, p).run(c)
       _  <- uploadAll(b, m).run(c)
     } yield ()
 
-  private def checkFailIfPrefixExists(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
+  private def maybeFailIfPrefixExists(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
     maybeRun(failIfPrefixExists, exists(bucket, prefix),
       raiseError(s"Prefix '${prefix}' already exists in bucket '${bucket}'"))
 
-  private def checkFailIfObjectExists(bucket: String, keys: List[String]): Kleisli[IO, AmazonS3, Unit] =
+  private def maybeFailIfObjectExists(bucket: String, keys: List[String]): Kleisli[IO, AmazonS3, Unit] =
     maybeRun(failIfObjectExists, existsAny(bucket, keys),
       raiseError(s"Upload would overwrite one or more files in bucket '${bucket}'"))
 
-  private def checkCleanPrefixBeforeUpload(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
+  private def maybeCleanPrefixBeforeUpload(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
     Kleisli { c =>
       cleanPrefixBeforeUpload.run.flatMap {
         case false => IO.unit
