@@ -1,10 +1,10 @@
-package seek.aws.autoscaling
+package seek.aws
+package autoscaling
 
 import cats.data.Kleisli
 import cats.effect.IO
 import com.amazonaws.services.autoscaling.model.{AttachLoadBalancerTargetGroupsRequest, AttachLoadBalancersRequest}
 import com.amazonaws.services.autoscaling.{AmazonAutoScaling, AmazonAutoScalingClientBuilder}
-import seek.aws.AwsTask
 
 class AttachLoadBalancer extends AwsTask {
 

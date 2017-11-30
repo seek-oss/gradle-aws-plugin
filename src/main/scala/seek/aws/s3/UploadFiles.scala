@@ -49,11 +49,11 @@ class UploadFiles extends AwsTask {
 
   private def maybeFailIfPrefixExists(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
     maybeRun(failIfPrefixExists, exists(bucket, prefix),
-      raiseError(s"Prefix '${prefix}' already exists in bucket '${bucket}'"))
+      raiseError(s"Prefix ${prefix} already exists in bucket ${bucket}"))
 
   private def maybeFailIfObjectExists(bucket: String, keys: List[String]): Kleisli[IO, AmazonS3, Unit] =
     maybeRun(failIfObjectExists, existsAny(bucket, keys),
-      raiseError(s"Upload would overwrite one or more files in bucket '${bucket}'"))
+      raiseError(s"Upload would overwrite one or more files in bucket ${bucket}"))
 
   private def maybeCleanPrefixBeforeUpload(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
     Kleisli { c =>

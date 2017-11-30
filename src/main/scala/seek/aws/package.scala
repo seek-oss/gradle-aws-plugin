@@ -2,7 +2,7 @@ package seek
 
 import cats.data.Kleisli
 import cats.effect.IO
-import org.gradle.api.Project
+import org.gradle.api.{GradleException, Project}
 
 package object aws {
 
@@ -14,6 +14,9 @@ package object aws {
         p.getExtensions.getByType(classOf[AwsPluginExtension])
     }
   }
+
+  def raiseError(msg: String): IO[Unit] =
+    IO.raiseError(new GradleException(msg))
 
   def maybeRun[C](
       shouldRun: LazyProp[Boolean],

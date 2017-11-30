@@ -36,5 +36,5 @@ class UploadFile extends AwsTask {
 
   private def maybeFailIfObjectExists(bucket: String, key: String): Kleisli[IO, AmazonS3, Unit] =
     maybeRun(failIfObjectExists, exists(bucket, key),
-      raiseError(s"Object '${key}' already exists in bucket '${bucket}'"))
+      raiseError(s"Object ${key} already exists in bucket ${bucket}"))
 }

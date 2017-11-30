@@ -28,8 +28,5 @@ abstract class AwsTask extends DefaultTask with HasLazyProps {
   protected def region: IO[Regions] =
     (if (_region.isSet) _region.run
     else project.awsExt.region.run).map(fromName)
-
-  protected def raiseError(msg: String): IO[Unit] =
-    IO.raiseError(new GradleException(msg))
 }
 

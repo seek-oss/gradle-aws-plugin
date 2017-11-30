@@ -24,7 +24,7 @@ object Lookup {
 
 class PropertyLookup(key: String) extends Lookup {
 
-  class MissingPropertyException(p: String) extends GradleException(s"Property '${p}' expected but not defined")
+  class MissingPropertyException(p: String) extends GradleException(s"Property ${p} expected but not defined")
 
   def run(p: Project): IO[String] =
     IO(property(p, key)).map {
@@ -71,9 +71,9 @@ class CloudFormationStackOutputLookup(stackName: String, key: String) extends Lo
   private def stackOutput(c: AmazonCloudFormation, region: String): IO[String] = {
     IO(c.describeStacks(new DescribeStacksRequest().withStackName(stackName))).map { r =>
       r.getStacks.asScala.headOption match {
-        case None    => throw new GradleException(s"Stack '${stackName}' does not exist in region '${region}'")
+        case None    => throw new GradleException(s"Stack ${stackName} does not exist in region ${region}")
         case Some(h) => h.getOutputs.asScala.find(_.getOutputKey == key) match {
-          case None    => throw new GradleException(s"Stack '${stackName}' does not have output key '${key}'")
+          case None    => throw new GradleException(s"Stack ${stackName} does not have output key ${key}")
           case Some(o) => o.getOutputValue
         }
       }

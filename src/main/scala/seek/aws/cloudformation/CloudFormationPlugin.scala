@@ -10,5 +10,7 @@ class CloudFormationPlugin extends Plugin[Project] {
     if (!project.getPlugins.hasPlugin(classOf[CloudFormationPlugin])) {
       project.getExtensions.create("cloudFormation", classOf[CloudFormationPluginExtension], project)
     }
+    project.getTasks.create("createOrUpdateStack", classOf[CreateOrUpdateStack])
+    project.getTasks.create("deleteStack", classOf[DeleteStack])
   }
 }
