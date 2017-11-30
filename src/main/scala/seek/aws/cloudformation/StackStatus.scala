@@ -2,14 +2,11 @@ package seek.aws.cloudformation
 
 sealed trait StackStatus {
   def name: String
-  def complete: Boolean
-  def failed: Boolean
-  def inProgress: Boolean
 }
 
-sealed trait CompleteStackStatus   extends StackStatus { def complete = true;  def failed = false; def inProgress = false }
-sealed trait FailedStackStatus     extends StackStatus { def complete = false; def failed = true;  def inProgress = false }
-sealed trait InProgressStackStatus extends StackStatus { def complete = false; def failed = false; def inProgress = true }
+sealed trait CompleteStackStatus   extends StackStatus
+sealed trait FailedStackStatus     extends StackStatus
+sealed trait InProgressStackStatus extends StackStatus
 
 case object CreateComplete         extends CompleteStackStatus { def name = "CREATE_COMPLETE" }
 case object UpdateComplete         extends CompleteStackStatus { def name = "UPDATE_COMPLETE" }
@@ -32,7 +29,7 @@ case object UpdateRollbackCompleteCleanupInProgress extends InProgressStackStatu
 
 object StackStatus {
   val AllStatuses = List(
-    CreateComplete, UpdateComplete, RollbackComplete, UpdateRollbackComplete,
+    CreateComplete, UpdateComplete, RollbackComplete, UpdateRollbackComplete, DeleteComplete,
     CreateFailed, RollbackFailed, DeleteFailed, UpdateRollbackFailed,
     CreateInProgress, RollbackInProgress, DeleteInProgress, UpdateInProgress,
     UpdateCompleteCleanupInProgress, UpdateRollbackInProgress, UpdateRollbackCompleteCleanupInProgress)

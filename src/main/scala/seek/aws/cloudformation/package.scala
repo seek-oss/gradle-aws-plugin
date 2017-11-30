@@ -3,14 +3,14 @@ package seek.aws
 import java.lang.Thread.sleep
 
 import cats.data.Kleisli
-import cats.data.Kleisli._
 import cats.effect.IO
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
-import com.amazonaws.services.cloudformation.model.{ListStacksRequest, StackSummary}
+import com.amazonaws.services.cloudformation.model.{DescribeStacksRequest, ListStacksRequest, StackSummary}
 import fs2.Stream
 import org.gradle.api.Project
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.{Duration, _}
 
 package object cloudformation {
 
@@ -23,6 +23,7 @@ package object cloudformation {
     }
   }
 
+  // Is this useful? Takes a really long time in some accounts
   def listStacks: Kleisli[Stream[IO, ?], AmazonCloudFormation, StackSummary] =
     Kleisli[Stream[IO, ?], AmazonCloudFormation, StackSummary] { c =>
       case class X(token: Option[String], complete: Boolean)
@@ -42,15 +43,27 @@ package object cloudformation {
     }
 
   def stackStatus(stackName: String): Kleisli[IO, AmazonCloudFormation, Option[StackStatus]] =
-    listStacks.mapF(_.filter(_.getStackName == stackName).runLast.map(_.map(s => StackStatus(s.getStackStatus))))
+    Kleisli { c =>
+      IO(c.describeStacks(new DescribeStacksRequest().withStackName(stackName))).attempt.flatMap {
+        case Right(s) =>
+          IO.pure(s.getStacks.asScala.headOption.map(s => StackStatus(s.getStackStatus)))
+        case Left(e)  =>
+          if (e.getMessage.contains("does not exist")) IO.pure(None)
+          else IO.raiseError(e)
+      }
+    }
 
-  def waitForStack(stackName: String): Kleisli[IO, AmazonCloudFormation, Unit] =
-    stackStatus(stackName).flatMap {
-      case None                           => lift(raiseError(s"Stack ${stackName} does not exist"))
-      case Some(s: FailedStackStatus)     => lift(raiseError(s"Stack ${stackName} failed with status ${s.name}"))
-      case Some(_: CompleteStackStatus)   => lift(IO.unit)
-      case Some(_: InProgressStackStatus) =>
-        sleep(1000)
-        waitForStack(stackName)
+  def waitForStack(stackName: String, checkEvery: Duration = 3.seconds): Kleisli[IO, AmazonCloudFormation, Unit] =
+    Kleisli { c =>
+      for {
+        _  <- IO(sleep(checkEvery.toMillis))
+        ss <- stackStatus(stackName).run(c)
+        _  <- ss match {
+          case None                         => IO.unit
+          case Some(_: CompleteStackStatus) => IO.unit
+          case Some(s: FailedStackStatus)   => raiseError(s"Stack ${stackName} failed with status ${s.name}")
+          case _                            => waitForStack(stackName).run(c)
+        }
+      } yield ()
     }
 }

@@ -14,7 +14,7 @@ class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
       case None    =>
         default match {
           case Some(v) => IO.pure(v)
-          case None    => IO.raiseError(new InvalidUserCodeException(s"Property ${name} has not been set"))
+          case None    => IO.raiseError(new GradleException(s"Property ${name} has not been set"))
         }
     }
 

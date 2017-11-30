@@ -27,7 +27,7 @@ class AttachLoadBalancer extends AwsTask {
       _   <- (loadBalancer.isSet, targetGroupArn.isSet) match {
         case (true, false) => loadBalancer.run.map(lb => attachV1(asg, lb).run(c))
         case (false, true) => targetGroupArn.run.map(tg => attachV2(asg, tg).run(c))
-        case _             => raiseError("Either 'loadBalancer' or 'targetGroupArn' must be specified but not both")
+        case _             => raiseError("Either loadBalancer or targetGroupArn must be specified but not both")
 
       }
     } yield ()

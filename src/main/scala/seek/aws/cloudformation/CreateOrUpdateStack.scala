@@ -34,14 +34,14 @@ class CreateOrUpdateStack extends AwsTask {
       _  <- waitForStack(sn).run(c)
     } yield ()
 
-  private def createOrUpdate(s: StackProperties): Kleisli[IO, AmazonCloudFormation, Unit] =
+  private def createOrUpdate(s: StackProperties): Kleisli[IO, AmazonCloudFormation, Unit] = {
+    def inProgressError(ss: StackStatus) = raiseError(s"Can not update stack ${s.name} as it has status ${ss.name}")
     stackStatus(s.name).flatMap {
-      case None    => create(s)
-      case Some(status) =>
-        if (status.inProgress)
-          lift(raiseError(s"Can not update stack ${status.name} as it has status ${status.name}"))
-        else update(s)
+      case None | Some(DeleteComplete)     => create(s)
+      case Some(ss: InProgressStackStatus) => lift(inProgressError(ss))
+      case Some(_)                         => update(s)
     }
+  }
 
   private def create(s: StackProperties): Kleisli[IO, AmazonCloudFormation, Unit] =
     Kleisli { c =>
@@ -104,7 +104,9 @@ class CreateOrUpdateStack extends AwsTask {
     templateUrl: Option[String],
     policyBody: Option[String],
     policyUrl: Option[String]) {
-    def cfnParams = parameters.toList.map {
+
+    def cfnParams: List[Parameter] =
+      parameters.toList.map {
         case (k, v) => new Parameter().withParameterKey(k).withParameterValue(v)
       }
   }
