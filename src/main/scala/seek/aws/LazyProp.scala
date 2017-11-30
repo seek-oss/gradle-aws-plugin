@@ -1,49 +1,47 @@
 package seek.aws
 
+import java.io.File
+import java.{lang, util}
+import java.util.concurrent.Callable
+
+import cats.effect.IO
 import groovy.lang.Closure
-import org.gradle.api.{InvalidUserCodeException, Project}
+import org.codehaus.groovy.runtime.GStringImpl
+import org.gradle.api.artifacts.dsl.ArtifactHandler
+import org.gradle.api.file._
+import org.gradle.api.internal.project.DefaultProject
+import org.gradle.api.plugins.{ExtensionContainer, ObjectConfigurationAction}
+import org.gradle.api._
+import org.gradle.api.internal.plugins.DefaultConvention
+import org.gradle.api.reflect.TypeOf
+import org.gradle.normalization.InputNormalizationHandler
+import org.gradle.process.{ExecSpec, JavaExecSpec}
 
 case class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
 
-  private var run: Option[Any] = None
-  private var cache: Option[Either[Throwable, A]] = None
+  private var thing: Option[Any] = None
 
-  def get: A = getEither.right.get
-
-  def getOption: Option[A] = getEither.toOption
-
-  def getEither: Either[Throwable, A] =
-    cache match {
-      case Some(r) => r
+  def run: IO[A] =
+    thing match {
+      case Some(v) => resolve(v)
       case None    =>
-        cache = Some(
-          run match {
-            case Some(v) => resolve(v)
-            case None    =>
-              default match {
-                case Some(v) => Right(v)
-                case None    => Left(new InvalidUserCodeException(s"Task property '${name}' must be set"))
-              }
-          })
-        cache.get
+        default match {
+          case Some(v) => IO.pure(v)
+          case None    => IO.raiseError(new InvalidUserCodeException(s"Property '${name}' has not been set"))
+        }
     }
 
   def set(x: Any) =
-    run = Some(x)
+    thing = Some(x)
 
-  def isEmpty: Boolean =
-    getOption.isEmpty
+  def isSet: Boolean =
+    thing.isDefined
 
-  def isDefined: Boolean =
-    getOption.isDefined
-
-  private def resolve(run: Any): Either[Throwable, A] =
-    try run match {
-      case c: Closure[_] => resolve(c.call())
-      case p: Lookup     => resolve(p.run(project))
-      case v             => Right(v.asInstanceOf[A])
-    } catch {
-      case th: Throwable => Left(th)
+  private def resolve(v: Any): IO[A] =
+    v match {
+      case l: Lookup     => l.run(project).map(_.asInstanceOf[A])
+      case c: Closure[_] => IO(c.call()).flatMap(resolve)
+      case a             => IO.pure(a.asInstanceOf[A])
     }
 }
 
@@ -57,4 +55,3 @@ trait HasLazyProps {
 }
 
 object HasLazyProps extends HasLazyProps
-

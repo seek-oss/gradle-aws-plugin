@@ -59,4 +59,20 @@ package object s3 {
       }
       pages.flatMap(Stream.emits(_))
     }
+
+  def maybeRun(
+      shouldRun: LazyProp[Boolean],
+      runnable: Kleisli[IO, AmazonS3, Boolean],
+      onTrue: IO[Unit] = IO.unit,
+      onFalse: IO[Unit] = IO.unit): Kleisli[IO, AmazonS3, Unit] =
+    Kleisli { c =>
+      shouldRun.run.flatMap {
+        case false => IO.unit
+        case true  =>
+          runnable.run(c).flatMap {
+            case false => IO.unit
+            case true  => onTrue
+          }
+      }
+    }
 }

@@ -1,8 +1,9 @@
 package seek.aws.autoscaling
 
+import cats.data.Kleisli
 import cats.effect.IO
-import com.amazonaws.services.autoscaling.AmazonAutoScalingClientBuilder
 import com.amazonaws.services.autoscaling.model.{AttachLoadBalancerTargetGroupsRequest, AttachLoadBalancersRequest}
+import com.amazonaws.services.autoscaling.{AmazonAutoScaling, AmazonAutoScalingClientBuilder}
 import seek.aws.AwsTask
 
 class AttachLoadBalancer extends AwsTask {
@@ -18,35 +19,32 @@ class AttachLoadBalancer extends AwsTask {
   private val targetGroupArn = lazyProp[String]("targetGroupArn")
   def targetGroupArn(v: Any): Unit = targetGroupArn.set(v)
 
-  private val client = AmazonAutoScalingClientBuilder.standard().withRegion(region).build()
-
   override def run: IO[Unit] =
-    autoScalingGroup.getEither match {
-      case Right(autoScalingGroup) =>
-        loadBalancer.getEither match {
-          case Right(loadBalancer) => attachClassicLoadBalancer(autoScalingGroup, loadBalancer)
-          case _ =>
-            targetGroupArn.getEither match {
-              case Right(targetGroupArn) => attachApplicationLoadBalancer(autoScalingGroup, targetGroupArn)
-              case _ => raiseUserCodeError("Either 'loadBalancer' or 'targetGroupArn' must be specified")
-            }
-        }
-      case Left(th) => IO.raiseError(th)
+    for {
+      r   <- region
+      asg <- autoScalingGroup.run
+      c   <- IO.pure(AmazonAutoScalingClientBuilder.standard().withRegion(r).build())
+      _   <- (loadBalancer.isSet, targetGroupArn.isSet) match {
+        case (true, false) => loadBalancer.run.map(lb => attachV1(asg, lb).run(c))
+        case (false, true) => targetGroupArn.run.map(tg => attachV2(asg, tg).run(c))
+        case _             => raiseError("Either 'loadBalancer' or 'targetGroupArn' must be specified but not both")
+
+      }
+    } yield ()
+
+  private def attachV1(autoScalingGroup: String, loadBalancer: String): Kleisli[IO, AmazonAutoScaling, Unit] =
+    Kleisli { c =>
+      val r = new AttachLoadBalancersRequest()
+        .withAutoScalingGroupName(autoScalingGroup)
+        .withLoadBalancerNames(loadBalancer)
+      IO(c.attachLoadBalancers(r))
     }
 
-  private def attachClassicLoadBalancer(autoScalingGroup: String, loadBalancer: String): IO[Unit] = {
-    logger.lifecycle(s"Attaching '${autoScalingGroup}' to load balancer '${loadBalancer}'")
-    val r = new AttachLoadBalancersRequest()
-      .withAutoScalingGroupName(autoScalingGroup)
-      .withLoadBalancerNames(loadBalancer)
-    IO(client.attachLoadBalancers(r))
-  }
-
-  private def attachApplicationLoadBalancer(autoScalingGroup: String, targetGroupArn: String): IO[Unit] = {
-    logger.lifecycle(s"Attaching '${autoScalingGroup}' to target group '${targetGroupArn}'")
-    val r = new AttachLoadBalancerTargetGroupsRequest()
-      .withAutoScalingGroupName(autoScalingGroup)
-      .withTargetGroupARNs(targetGroupArn)
-    IO(client.attachLoadBalancerTargetGroups(r))
-  }
+  private def attachV2(autoScalingGroup: String, targetGroupArn: String): Kleisli[IO, AmazonAutoScaling, Unit] =
+    Kleisli { c =>
+      val r = new AttachLoadBalancerTargetGroupsRequest()
+        .withAutoScalingGroupName(autoScalingGroup)
+        .withTargetGroupARNs(targetGroupArn)
+      IO(c.attachLoadBalancerTargetGroups(r))
+    }
 }

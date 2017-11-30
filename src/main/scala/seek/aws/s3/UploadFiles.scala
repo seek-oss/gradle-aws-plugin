@@ -2,9 +2,10 @@ package seek.aws.s3
 
 import java.io.File
 
+import cats.data.Kleisli
+import cats.data.Kleisli._
 import cats.effect.IO
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
-import org.gradle.api.GradleException
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import org.gradle.api.file.{FileTree, FileTreeElement}
 import seek.aws.AwsTask
 
@@ -32,55 +33,51 @@ class UploadFiles extends AwsTask {
   private val cleanPrefixBeforeUpload = lazyProp[Boolean]("cleanPrefixBeforeUpload", false)
   def cleanPrefixBeforeUpload(v: Any): Unit = cleanPrefixBeforeUpload.set(v)
 
-  private val client = AmazonS3ClientBuilder.standard().withRegion(region).build()
+  override def run: IO[Unit] =
+    for {
+      r  <- region
+      b  <- bucket.run
+      fs <- files.run
+      p  <- prefix.run.map(_.stripSuffix("/"))
+      m  <- IO.pure(keyFileMap(fs, p))
+      c  <- IO.pure(AmazonS3ClientBuilder.standard().withRegion(r).build())
+      _  <- checkFailIfPrefixExists(b, p).run(c)
+      _  <- checkFailIfObjectExists(b, m.keys.toList).run(c)
+      _  <- checkCleanPrefixBeforeUpload(b, p).run(c)
+      _  <- uploadAll(b, m).run(c)
+    } yield ()
 
-  override def run: IO[Unit] = {
-    val prefix = if (this.prefix.get.nonEmpty) s"${this.prefix.get.stripSuffix("/")}/" else ""
-    val keyFileMap = fileElements(files.get).foldLeft(Map.empty[String, File]) { (z, e) =>
+  private def checkFailIfPrefixExists(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
+    maybeRun(failIfPrefixExists, exists(bucket, prefix),
+      raiseError(s"Prefix '${prefix}' already exists in bucket '${bucket}'"))
+
+  private def checkFailIfObjectExists(bucket: String, keys: List[String]): Kleisli[IO, AmazonS3, Unit] =
+    maybeRun(failIfObjectExists, existsAny(bucket, keys),
+      raiseError(s"One or more objects already exist in bucket '${bucket}'"))
+
+  private def checkCleanPrefixBeforeUpload(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
+    Kleisli { c =>
+      cleanPrefixBeforeUpload.run.flatMap {
+        case false => IO.unit
+        case true  =>
+          if (prefix.isEmpty)
+            raiseError("No prefix specified to clean (and refusing to delete entire bucket)")
+          else
+            deleteAll(bucket, prefix).run(c)
+      }
+    }
+
+  private def uploadAll(bucket: String, keyFileMap: Map[String, File]): Kleisli[IO, AmazonS3, Unit] =
+    keyFileMap.foldLeft(lift[IO, AmazonS3, Unit](IO.unit)) {
+      case (z, (k, f)) => z.flatMap(_ => upload(bucket, k, f))
+    }
+
+  private def keyFileMap(files: FileTree, prefix: String) = {
+    val buf = new mutable.ArrayBuffer[FileTreeElement]()
+    files.visit(d => buf += d)
+    val elems = buf.filter(e => e.getFile.isFile && e.getFile.exists).toList
+    elems.foldLeft(Map.empty[String, File]) { (z, e) =>
       z + (s"${prefix}${e.getRelativePath}" -> e.getFile)
     }
-
-    for {
-      _ <- checkFailIfPrefixExists
-      _ <- checkFailIfObjectExists(keyFileMap.keys.toList)
-      _ <- checkCleanPrefixBeforeUpload
-      _ <- uploadAll(keyFileMap)
-    } yield ()
-  }
-
-  private def checkFailIfPrefixExists: IO[Unit] =
-    if (failIfPrefixExists.get)
-      exists(bucket.get, prefix.get).run(client).flatMap {
-        case true  => IO.raiseError(new GradleException(s"Prefix '${prefix.get}' already exists in bucket '${bucket.get}'"))
-        case false => IO.unit
-      }
-    else IO.unit
-
-  private def checkFailIfObjectExists(keys: List[String]): IO[Unit] =
-    if (failIfObjectExists.get)
-      existsAny(bucket.get, keys).run(client).flatMap {
-        case true  => IO.raiseError(new GradleException(s"One or more objects already exist in bucket '${bucket.get}'"))
-        case false => IO.unit
-      }
-    else IO.unit
-
-  private def checkCleanPrefixBeforeUpload: IO[Unit] =
-    if (cleanPrefixBeforeUpload.get) cleanPrefix else IO.unit
-
-  private def cleanPrefix: IO[Unit] =
-    if (prefix.get.isEmpty)
-      IO.raiseError(new GradleException("No prefix specified to clean (and refusing to delete entire bucket)"))
-    else
-      deleteAll(bucket.get, prefix.get).run(client)
-
-  private def uploadAll(keyFileMap: Map[String, File]): IO[Unit] =
-    keyFileMap.foldLeft(IO.unit) {
-      case (z, (k, f)) => z.flatMap(_ => upload(bucket.get, k, f).run(client))
-    }
-
-  private def fileElements(ft: FileTree): List[FileTreeElement] = {
-    val buf = new mutable.ArrayBuffer[FileTreeElement]()
-    ft.visit(d => buf += d)
-    buf.filter(e => e.getFile.isFile && e.getFile.exists).toList
   }
 }

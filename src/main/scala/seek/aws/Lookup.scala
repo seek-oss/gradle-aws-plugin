@@ -1,23 +1,20 @@
 package seek.aws
 
-import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder
+import cats.effect.IO
+import com.amazonaws.services.cloudformation.model.DescribeStacksRequest
+import com.amazonaws.services.cloudformation.{AmazonCloudFormation, AmazonCloudFormationClientBuilder}
 import org.gradle.api._
-import seek.aws.Lookup.MissingPropertyException
+import seek.aws.instances._
+import seek.aws.syntax._
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
-import seek.aws.syntax._
-import seek.aws.instances._
-
 
 sealed trait Lookup {
-  def run(p: Project): String
+  def run(p: Project): IO[String]
 }
 
 object Lookup {
-
-  class MissingPropertyException(p: String) extends GradleException(s"Property '${p}' expected but not defined")
-
   def lookup(key: String): Lookup =
     new PropertyLookup(key)
 
@@ -25,18 +22,12 @@ object Lookup {
     new CloudFormationStackOutputLookup(stackName, key)
 }
 
-class CloudFormationStackOutputLookup(stackName: String, key: String) extends Lookup {
-  def run(p: Project): String = {
-    val region = p.awsExt.region.get
-//    val c = AmazonCloudFormationClientBuilder.standard().withRegion()
-    ""
-  }
-}
-
 class PropertyLookup(key: String) extends Lookup {
 
-  def run(p: Project): String =
-    property(p, key) match {
+  class MissingPropertyException(p: String) extends GradleException(s"Property '${p}' expected but not defined")
+
+  def run(p: Project): IO[String] =
+    IO(property(p, key)).map {
       case Some(v) => v
       case None    =>
         val fullKey = buildKey(p, lookupPrefix(p).split('.').toList)
@@ -65,21 +56,28 @@ class PropertyLookup(key: String) extends Lookup {
 
 }
 
-private object Test extends App {
+class CloudFormationStackOutputLookup(stackName: String, key: String) extends Lookup {
 
-//  val props1 = Map(
-//    "environment"     -> "development",
-//    "development.foo" -> 51
-//  ).asJava
-//  val x = Lookup.lookup("foo").get[Int](props1, "environment")
-//  println(x)
-//
-//  val props2 = Map(
-//    "application"               -> "projector",
-//    "environment"               -> "development",
-//    "projector.development.foo" -> 52
-//  ).asJava
-//   val y = Lookup.lookup("foo").get[Int](props2, "application.environment")
-//  println(y)
+  def run(p: Project): IO[String] =
+    for {
+      r <- p.awsExt.region.run
+      c <- IO.pure(client(r))
+      o <- stackOutput(c, r)
+    } yield o
+
+  private def client(region: String): AmazonCloudFormation =
+    AmazonCloudFormationClientBuilder.standard().withRegion(region).build()
+
+  private def stackOutput(c: AmazonCloudFormation, region: String): IO[String] = {
+    IO(c.describeStacks(new DescribeStacksRequest().withStackName(stackName))).map { r =>
+      r.getStacks.asScala.headOption match {
+        case None    => throw new GradleException(s"Stack '${stackName}' does not exist in region '${region}'")
+        case Some(h) => h.getOutputs.asScala.find(_.getOutputKey == key) match {
+          case None    => throw new GradleException(s"Stack '${stackName}' does not have output key '${key}'")
+          case Some(o) => o.getOutputValue
+        }
+      }
+    }
+  }
 }
 

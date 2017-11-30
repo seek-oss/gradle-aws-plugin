@@ -1,6 +1,7 @@
 package seek.aws
 package cloudformation
 
+import cats.effect.IO
 import org.gradle.api.Project
 import simulacrum.typeclass
 
@@ -15,11 +16,15 @@ class CloudFormationPluginExtension(implicit project: Project) {
   private[cloudformation] var parameters: Map[String, Any] = Map()
   def parameters(v: java.util.Map[String, Any]): Unit = parameters = v.asScala.toMap
 
-  private[cloudformation] def resolvedParameters: Map[String, String] =
-    parameters.mapValues { v =>
-      val p = lazyProp[String]("")
-      p.set(v)
-      p.get
+  private[cloudformation] def resolvedParameters: IO[Map[String, String]] =
+    parameters.foldLeft(IO.pure(Map.empty[String, String])) {
+      case (z, (k, v)) =>
+        val p = lazyProp[String]("")
+        p.set(v)
+        for {
+          m <- z
+          x <- p.run
+        } yield m + (k -> x)
     }
 }
 

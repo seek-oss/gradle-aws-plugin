@@ -3,9 +3,9 @@ package seek.aws
 import cats.effect.IO
 import com.amazonaws.regions.Regions
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.{DefaultTask, InvalidUserCodeException}
-import seek.aws.syntax._
+import org.gradle.api.{DefaultTask, GradleException}
 import seek.aws.instances._
+import seek.aws.syntax._
 
 abstract class AwsTask extends DefaultTask with HasLazyProps {
 
@@ -13,8 +13,8 @@ abstract class AwsTask extends DefaultTask with HasLazyProps {
 
   setGroup("AWS")
 
-  private val regionProp = lazyProp[String]("region")
-  def region(v: Any) = regionProp.set(v)
+  private val _region = lazyProp[String]("region")
+  def region(v: Any) = _region.set(v)
 
   protected val logger = getLogger
 
@@ -24,13 +24,11 @@ abstract class AwsTask extends DefaultTask with HasLazyProps {
 
   protected def run: IO[Unit]
 
-  protected def region: Regions =
-    regionProp.getOption match {
-      case Some(r) => Regions.fromName(r)
-      case None    => Regions.fromName(project.awsExt.region.get)
-    }
+  protected def region: IO[Regions] =
+    (if (_region.isSet) _region.run
+    else project.awsExt.region.run).map(Regions.fromName)
 
-  protected def raiseUserCodeError(msg: String): IO[Unit] =
-    IO.raiseError(new InvalidUserCodeException(msg))
+  protected def raiseError(msg: String): IO[Unit] =
+    IO.raiseError(new GradleException(msg))
 }
 
