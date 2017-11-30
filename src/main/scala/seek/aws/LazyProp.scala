@@ -4,7 +4,7 @@ import cats.effect.IO
 import groovy.lang.Closure
 import org.gradle.api._
 
-case class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
+class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
 
   private var thing: Option[Any] = None
 
@@ -35,10 +35,10 @@ case class LazyProp[A](name: String, default: Option[A] = None)(project: Project
 trait HasLazyProps {
 
   def lazyProp[A](name: String)(implicit p: Project): LazyProp[A] =
-    LazyProp[A](name)(p)
+    new LazyProp[A](name)(p)
 
   def lazyProp[A](name: String, default: A)(implicit p: Project): LazyProp[A] =
-    LazyProp[A](name, Some(default))(p)
+    new LazyProp[A](name, Some(default))(p)
 }
 
 object HasLazyProps extends HasLazyProps
