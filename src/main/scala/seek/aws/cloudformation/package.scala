@@ -5,8 +5,10 @@ import java.lang.Thread.sleep
 import cats.data.Kleisli
 import cats.effect.IO
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
-import com.amazonaws.services.cloudformation.model.DescribeStacksRequest
+import com.amazonaws.services.cloudformation.model.{DescribeStacksRequest, Stack}
 import org.gradle.api.Project
+import fs2.Stream
+import fs2.Stream._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.{Duration, _}
@@ -31,6 +33,24 @@ package object cloudformation {
           if (e.getMessage.contains("does not exist")) IO.pure(None)
           else IO.raiseError(e)
       }
+    }
+
+  def describeStacks: Kleisli[Stream[IO, ?], AmazonCloudFormation, Stack] =
+    Kleisli[Stream[IO, ?], AmazonCloudFormation, Stack] { c =>
+      case class X(token: Option[String], complete: Boolean)
+      val pages = unfoldEval[IO, X, Seq[Stack]](X(None, false)) {
+        case X(_, true)  => IO.pure(None)
+        case X(t, false) =>
+          val req = new DescribeStacksRequest().withNextToken(t.orNull)
+          IO(c.describeStacks(req)).map { res =>
+            val ss = res.getStacks.asScala
+            Option(res.getNextToken) match {
+              case t @ Some(_) => Some(ss, X(t, false))
+              case _           => Some(ss, X(t, true))
+            }
+          }
+      }
+      pages.flatMap(emits(_))
     }
 
   def waitForStack(stackName: String, checkEvery: Duration = 3.seconds): Kleisli[IO, AmazonCloudFormation, Unit] =
