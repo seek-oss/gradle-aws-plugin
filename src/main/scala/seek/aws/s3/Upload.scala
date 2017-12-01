@@ -15,9 +15,11 @@ abstract class Upload extends AwsTask {
   private val interps = mutable.Map.empty[String, Map[String, Any]]
   def interp(file: String, m: java.util.Map[String, Any]): Unit =
     interps.put(file, m.asScala.toMap)
+  def interp(file: File, m: java.util.Map[String, Any]): Unit =
+    interps.put(file.getAbsolutePath, m.asScala.toMap)
 
-  private val startToken = lazyProp[String]("interpStartToken", "{{{")
-  private val endToken = lazyProp[String]("interpStartToken", "}}}")
+  private val startToken = lazyProp[String]("interpTokens", "{{{")
+  private val endToken = lazyProp[String]("interpTokens", "}}}")
   def interpTokens(start: Any, end: Any): Unit = {
     startToken.set(start)
     endToken.set(end)
