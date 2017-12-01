@@ -5,6 +5,7 @@ import java.io.File
 
 import cats.effect.IO
 import org.gradle.api.Project
+import seek.aws.LazyProp._
 import simulacrum.typeclass
 
 import scala.collection.JavaConverters._
@@ -34,10 +35,10 @@ class CloudFormationPluginExtension(implicit project: Project) {
   def tags(v: java.util.Map[String, Any]): Unit = _tags = v.asScala.toMap
 
   private[cloudformation] def parameters: IO[Map[String, String]] =
-    LazyProp.resolve(_parameters)
+    renderValues(_parameters)
 
   private[cloudformation] def tags: IO[Map[String, String]] =
-    LazyProp.resolve(_tags)
+    renderValues(_tags)
 }
 
 @typeclass trait HasCloudFormationPluginExtension[A] {

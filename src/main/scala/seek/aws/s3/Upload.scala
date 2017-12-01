@@ -5,7 +5,7 @@ import java.io.File
 
 import cats.effect.IO
 import fs2.{io, text}
-import seek.aws.LazyProp.resolve
+import seek.aws.LazyProp._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -59,8 +59,8 @@ abstract class Upload extends AwsTask {
     interps.foldLeft(IO.pure(Map.empty[String, Map[String, String]])) {
       case (z, (k, v)) =>
         for {
-          m <- z
-          r <- resolve(v)
-        } yield m + (k -> r)
+          m  <- z
+          vs <- renderValues(v)
+        } yield m + (k -> vs)
     }
 }

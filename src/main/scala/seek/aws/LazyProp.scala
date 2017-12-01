@@ -11,7 +11,7 @@ class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
 
   def run: IO[A] =
     thing match {
-      case Some(v) => resolve(v)
+      case Some(v) => render(v)
       case None    =>
         default match {
           case Some(v) => IO.pure(v)
@@ -29,26 +29,32 @@ class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
   def isSet: Boolean =
     thing.isDefined
 
-  private def resolve(v: Any): IO[A] =
+  private def render(v: Any): IO[A] =
     v match {
       case l: Lookup     => l.run(project).map(_.asInstanceOf[A])
-      case c: Closure[_] => IO(c.call()).flatMap(resolve)
+      case c: Closure[_] => IO(c.call()).flatMap(render)
       case a             => IO.pure(a.asInstanceOf[A])
     }
 }
 
 object LazyProp {
 
-  def resolve(m: Map[String, Any])(implicit p: Project): IO[Map[String, String]] =
-    m.foldLeft(IO.pure(Map.empty[String, String])) {
-      case (z, (k, v)) =>
-        val lp = lazyProp[String]("")
-        lp.set(v)
-        for {
-          m <- z
-          x <- lp.run
-        } yield m + (k -> x)
+  def render(a: Any)(implicit p: Project): IO[String] = {
+    val lp = lazyProp[String]("")
+    lp.set(a)
+    lp.run
+  }
+
+  def renderAll(s: List[Any])(implicit p: Project): IO[List[String]] =
+    s.foldRight(IO.pure(List.empty[String])) { (a, z) =>
+      for {
+        h <- render(a)
+        t <- z
+      } yield h :: t
     }
+
+  def renderValues[A](m: Map[A, Any])(implicit p: Project): IO[Map[A, String]] =
+    renderAll(m.values.toList).map(rs => m.keys.zip(rs).toMap)
 }
 
 trait HasLazyProps {
