@@ -3,6 +3,7 @@ package seek.aws
 import cats.effect.IO
 import groovy.lang.Closure
 import org.gradle.api._
+import seek.aws.HasLazyProps.lazyProp
 
 class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
 
@@ -33,6 +34,20 @@ class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
       case l: Lookup     => l.run(project).map(_.asInstanceOf[A])
       case c: Closure[_] => IO(c.call()).flatMap(resolve)
       case a             => IO.pure(a.asInstanceOf[A])
+    }
+}
+
+object LazyProp {
+
+  def resolve(m: Map[String, Any])(implicit p: Project): IO[Map[String, String]] =
+    m.foldLeft(IO.pure(Map.empty[String, String])) {
+      case (z, (k, v)) =>
+        val lp = lazyProp[String]("")
+        lp.set(v)
+        for {
+          m <- z
+          x <- lp.run
+        } yield m + (k -> x)
     }
 }
 

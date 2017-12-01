@@ -5,8 +5,7 @@ import java.lang.Thread.sleep
 import cats.data.Kleisli
 import cats.effect.IO
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
-import com.amazonaws.services.cloudformation.model.{DescribeStacksRequest, ListStacksRequest, StackSummary}
-import fs2.Stream
+import com.amazonaws.services.cloudformation.model.DescribeStacksRequest
 import org.gradle.api.Project
 
 import scala.collection.JavaConverters._
@@ -22,25 +21,6 @@ package object cloudformation {
         p.getExtensions.getByType(classOf[CloudFormationPluginExtension])
     }
   }
-
-  // Is this useful? Takes a really long time in some accounts
-  def listStacks: Kleisli[Stream[IO, ?], AmazonCloudFormation, StackSummary] =
-    Kleisli[Stream[IO, ?], AmazonCloudFormation, StackSummary] { c =>
-      case class X(token: Option[String], complete: Boolean)
-      val pages = Stream.unfoldEval[IO, X, Seq[StackSummary]](X(None, false)) {
-        case X(_, true)  => IO.pure(None)
-        case X(t, false) =>
-          val req = new ListStacksRequest().withNextToken(t.orNull)
-          IO(c.listStacks(req)).map { res =>
-            val ss = res.getStackSummaries.asScala
-            Option(res.getNextToken) match {
-              case t @ Some(_) => Some(ss, X(t, false))
-              case _           => Some(ss, X(t, true))
-            }
-        }
-      }
-      pages.flatMap(Stream.emits(_))
-    }
 
   def stackStatus(stackName: String): Kleisli[IO, AmazonCloudFormation, Option[StackStatus]] =
     Kleisli { c =>

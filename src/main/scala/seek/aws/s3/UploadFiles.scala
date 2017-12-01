@@ -11,7 +11,7 @@ import org.gradle.api.file.{FileTree, FileTreeElement}
 
 import scala.collection.mutable
 
-class UploadFiles extends AwsTask {
+class UploadFiles extends Upload {
 
   setDescription("Uploads multiple files to S3")
 
@@ -40,11 +40,13 @@ class UploadFiles extends AwsTask {
       fs <- files.run
       p  <- prefix.run.map(_.stripSuffix("/"))
       m  <- IO.pure(keyFileMap(fs, p))
+      is <- maybeInterp(m.values.toList)
+      mx <- IO.pure(m.keys.zip(is).toMap)
       c  <- IO.pure(AmazonS3ClientBuilder.standard().withRegion(r).build())
       _  <- maybeFailIfPrefixExists(b, p).run(c)
-      _  <- maybeFailIfObjectExists(b, m.keys.toList).run(c)
+      _  <- maybeFailIfObjectExists(b, mx.keys.toList).run(c)
       _  <- maybeCleanPrefixBeforeUpload(b, p).run(c)
-      _  <- uploadAll(b, m).run(c)
+      _  <- uploadAll(b, mx).run(c)
     } yield ()
 
   private def maybeFailIfPrefixExists(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =

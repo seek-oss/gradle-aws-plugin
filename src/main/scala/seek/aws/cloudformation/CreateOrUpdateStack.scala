@@ -24,8 +24,8 @@ class CreateOrUpdateStack extends AwsTask {
       r  <- region
       c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
       sn <- project.cfnExt.stackName.run
-      ps <- project.cfnExt.resolvedParameters
-      ts <- project.cfnExt.resolvedTags
+      ps <- project.cfnExt.parameters
+      ts <- project.cfnExt.tags
       tf <- project.cfnExt.templateFile.runOptional
       tu <- project.cfnExt.templateUrl.runOptional
       pf <- project.cfnExt.policyFile.runOptional

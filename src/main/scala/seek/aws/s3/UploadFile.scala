@@ -7,7 +7,7 @@ import cats.data.Kleisli
 import cats.effect.IO
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 
-class UploadFile extends AwsTask {
+class UploadFile extends Upload {
 
   setDescription("Uploads a single file to S3")
 
@@ -31,7 +31,8 @@ class UploadFile extends AwsTask {
       f <- file.run
       k <- key.run
       _ <- maybeFailIfObjectExists(b, k).run(c)
-      _ <- upload(b, k, f).run(c)
+      g <- maybeInterp(f)
+      _ <- upload(b, k, g).run(c)
     } yield ()
 
   private def maybeFailIfObjectExists(bucket: String, key: String): Kleisli[IO, AmazonS3, Unit] =

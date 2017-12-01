@@ -8,6 +8,7 @@ import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{DeleteObjectsRequest, ListObjectsV2Request, S3ObjectSummary}
 import fs2._
+import fs2.Stream._
 
 import scala.collection.JavaConverters._
 
@@ -47,7 +48,7 @@ package object s3 {
 
   def listObjects(bucket: String, prefix: String): Kleisli[Stream[IO, ?], AmazonS3, S3ObjectSummary] =
     Kleisli[Stream[IO, ?], AmazonS3, S3ObjectSummary] { c =>
-      val pages = Stream.unfoldEval[IO, Option[String], Seq[S3ObjectSummary]](None) { startAfter =>
+      val pages = unfoldEval[IO, Option[String], Seq[S3ObjectSummary]](None) { startAfter =>
         val req = new ListObjectsV2Request()
           .withBucketName(bucket)
           .withPrefix(prefix)
@@ -57,6 +58,6 @@ package object s3 {
           os.lastOption.map(last => (os, Some(last.getKey)))
         }
       }
-      pages.flatMap(Stream.emits(_))
+      pages.flatMap(emits(_))
     }
 }

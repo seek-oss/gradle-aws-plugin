@@ -27,28 +27,17 @@ class CloudFormationPluginExtension(implicit project: Project) {
   private[cloudformation] val policyUrl = lazyProp[String]("policyUrl")
   def policyUrl(v: Any): Unit = policyUrl.set(v)
 
-  private[cloudformation] var parameters: Map[String, Any] = Map()
-  def parameters(v: java.util.Map[String, Any]): Unit = parameters = v.asScala.toMap
+  private var _parameters: Map[String, Any] = Map()
+  def parameters(v: java.util.Map[String, Any]): Unit = _parameters = v.asScala.toMap
 
-  private[cloudformation] var tags: Map[String, Any] = Map()
-  def tags(v: java.util.Map[String, Any]): Unit = tags = v.asScala.toMap
+  private var _tags: Map[String, Any] = Map()
+  def tags(v: java.util.Map[String, Any]): Unit = _tags = v.asScala.toMap
 
-  private[cloudformation] def resolvedParameters: IO[Map[String, String]] =
-    resolveMap(parameters)
+  private[cloudformation] def parameters: IO[Map[String, String]] =
+    LazyProp.resolve(_parameters)
 
-  private[cloudformation] def resolvedTags: IO[Map[String, String]] =
-    resolveMap(tags)
-
-  private def resolveMap(m: Map[String, Any]): IO[Map[String, String]] =
-    m.foldLeft(IO.pure(Map.empty[String, String])) {
-      case (z, (k, v)) =>
-        val p = lazyProp[String]("")
-        p.set(v)
-        for {
-          m <- z
-          x <- p.run
-        } yield m + (k -> x)
-    }
+  private[cloudformation] def tags: IO[Map[String, String]] =
+    LazyProp.resolve(_tags)
 }
 
 @typeclass trait HasCloudFormationPluginExtension[A] {

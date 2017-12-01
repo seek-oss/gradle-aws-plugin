@@ -3,8 +3,8 @@ package seek.aws
 import cats.effect.IO
 import com.amazonaws.regions.Regions
 import com.amazonaws.regions.Regions.fromName
+import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.{DefaultTask, GradleException}
 import seek.aws.instances._
 import seek.aws.syntax._
 
