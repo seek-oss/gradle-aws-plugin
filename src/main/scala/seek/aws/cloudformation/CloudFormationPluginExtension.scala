@@ -30,8 +30,17 @@ class CloudFormationPluginExtension(implicit project: Project) {
   private[cloudformation] var parameters: Map[String, Any] = Map()
   def parameters(v: java.util.Map[String, Any]): Unit = parameters = v.asScala.toMap
 
+  private[cloudformation] var tags: Map[String, Any] = Map()
+  def tags(v: java.util.Map[String, Any]): Unit = tags = v.asScala.toMap
+
   private[cloudformation] def resolvedParameters: IO[Map[String, String]] =
-    parameters.foldLeft(IO.pure(Map.empty[String, String])) {
+    resolveMap(parameters)
+
+  private[cloudformation] def resolvedTags: IO[Map[String, String]] =
+    resolveMap(tags)
+
+  private def resolveMap(m: Map[String, Any]): IO[Map[String, String]] =
+    m.foldLeft(IO.pure(Map.empty[String, String])) {
       case (z, (k, v)) =>
         val p = lazyProp[String]("")
         p.set(v)

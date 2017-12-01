@@ -6,7 +6,7 @@ import java.io.File
 import cats.data.Kleisli
 import cats.data.Kleisli._
 import cats.effect.IO
-import com.amazonaws.services.cloudformation.model.{CreateStackRequest, Parameter, UpdateStackRequest}
+import com.amazonaws.services.cloudformation.model.{CreateStackRequest, Parameter, Tag, UpdateStackRequest}
 import com.amazonaws.services.cloudformation.{AmazonCloudFormation, AmazonCloudFormationClientBuilder}
 import org.apache.commons.codec.Charsets.UTF_8
 import seek.aws.cloudformation.instances._
@@ -25,11 +25,12 @@ class CreateOrUpdateStack extends AwsTask {
       c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
       sn <- project.cfnExt.stackName.run
       ps <- project.cfnExt.resolvedParameters
+      ts <- project.cfnExt.resolvedTags
       tf <- project.cfnExt.templateFile.runOptional
       tu <- project.cfnExt.templateUrl.runOptional
       pf <- project.cfnExt.policyFile.runOptional
       pu <- project.cfnExt.policyUrl.runOptional
-      p  <- IO.pure(StackProperties(sn, ps, tf.map(slurp), tu, pf.map(slurp), pu))
+      p  <- IO.pure(StackProperties(sn, ps, ts, tf.map(slurp), tu, pf.map(slurp), pu))
       _  <- createOrUpdate(p).run(c)
       _  <- waitForStack(sn).run(c)
     } yield ()
@@ -48,6 +49,7 @@ class CreateOrUpdateStack extends AwsTask {
       val req = new CreateStackRequest()
         .withStackName(s.name)
         .withParameters(s.cfnParams.asJava)
+        .withTags(s.cfnTags.asJava)
         .withCapabilities("CAPABILITY_IAM")
         .withCapabilities("CAPABILITY_NAMED_IAM")
       for {
@@ -67,6 +69,7 @@ class CreateOrUpdateStack extends AwsTask {
       val req = new UpdateStackRequest()
         .withStackName(s.name)
         .withParameters(s.cfnParams.asJava)
+        .withTags(s.cfnTags.asJava)
         .withCapabilities("CAPABILITY_IAM")
         .withCapabilities("CAPABILITY_NAMED_IAM")
       for {
@@ -100,6 +103,7 @@ class CreateOrUpdateStack extends AwsTask {
   private case class StackProperties(
     name: String,
     parameters: Map[String, String],
+    tags: Map[String, String],
     templateBody: Option[String],
     templateUrl: Option[String],
     policyBody: Option[String],
@@ -108,6 +112,11 @@ class CreateOrUpdateStack extends AwsTask {
     def cfnParams: List[Parameter] =
       parameters.toList.map {
         case (k, v) => new Parameter().withParameterKey(k).withParameterValue(v)
+      }
+
+    def cfnTags: List[Tag] =
+      tags.toList.map {
+        case (k, v) => new Tag().withKey(k).withValue(v)
       }
   }
 }
