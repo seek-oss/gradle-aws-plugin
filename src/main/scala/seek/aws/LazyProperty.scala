@@ -3,9 +3,9 @@ package seek.aws
 import cats.effect.IO
 import groovy.lang.Closure
 import org.gradle.api._
-import seek.aws.HasLazyProps.lazyProp
+import seek.aws.HasLazyProperties.lazyProperty
 
-class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
+class LazyProperty[A](name: String, default: Option[A] = None)(project: Project) {
 
   private var thing: Option[Any] = None
 
@@ -37,10 +37,10 @@ class LazyProp[A](name: String, default: Option[A] = None)(project: Project) {
     }
 }
 
-object LazyProp {
+object LazyProperty {
 
   def render(a: Any)(implicit p: Project): IO[String] = {
-    val lp = lazyProp[String]("")
+    val lp = lazyProperty[String]("")
     lp.set(a)
     lp.run
   }
@@ -57,13 +57,13 @@ object LazyProp {
     renderAll(m.values.toList).map(rs => m.keys.zip(rs).toMap)
 }
 
-trait HasLazyProps {
+trait HasLazyProperties {
 
-  def lazyProp[A](name: String)(implicit p: Project): LazyProp[A] =
-    new LazyProp[A](name)(p)
+  def lazyProperty[A](name: String)(implicit p: Project): LazyProperty[A] =
+    new LazyProperty[A](name)(p)
 
-  def lazyProp[A](name: String, default: A)(implicit p: Project): LazyProp[A] =
-    new LazyProp[A](name, Some(default))(p)
+  def lazyProperty[A](name: String, default: A)(implicit p: Project): LazyProperty[A] =
+    new LazyProperty[A](name, Some(default))(p)
 }
 
-object HasLazyProps extends HasLazyProps
+object HasLazyProperties extends HasLazyProperties

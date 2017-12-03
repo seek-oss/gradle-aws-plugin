@@ -5,7 +5,7 @@ import java.io.File
 
 import cats.effect.IO
 import fs2.{io, text}
-import seek.aws.LazyProp._
+import seek.aws.LazyProperty._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -18,8 +18,8 @@ abstract class Upload extends AwsTask {
   def interp(file: File, m: java.util.Map[String, Any]): Unit =
     interps.put(file.getAbsolutePath, m.asScala.toMap)
 
-  private val startToken = lazyProp[String]("interpTokens", "{{{")
-  private val endToken = lazyProp[String]("interpTokens", "}}}")
+  private val startToken = lazyProperty[String]("interpTokens", "{{{")
+  private val endToken = lazyProperty[String]("interpTokens", "}}}")
   def interpTokens(start: Any, end: Any): Unit = {
     startToken.set(start)
     endToken.set(end)

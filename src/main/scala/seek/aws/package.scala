@@ -19,10 +19,10 @@ package object aws {
     IO.raiseError(new GradleException(msg))
 
   def maybeRun[C](
-      shouldRun: LazyProp[Boolean],
-      runnable: Kleisli[IO, C, Boolean],
-      onTrue: IO[Unit] = IO.unit,
-      onFalse: IO[Unit] = IO.unit): Kleisli[IO, C, Unit] =
+                   shouldRun: LazyProperty[Boolean],
+                   runnable: Kleisli[IO, C, Boolean],
+                   onTrue: IO[Unit] = IO.unit,
+                   onFalse: IO[Unit] = IO.unit): Kleisli[IO, C, Unit] =
     Kleisli { c =>
       shouldRun.run.flatMap {
         case false => IO.unit

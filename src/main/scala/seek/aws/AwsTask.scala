@@ -8,13 +8,13 @@ import org.gradle.api.tasks.TaskAction
 import seek.aws.instances._
 import seek.aws.syntax._
 
-abstract class AwsTask extends DefaultTask with HasLazyProps {
+abstract class AwsTask extends DefaultTask with HasLazyProperties {
 
   implicit val project = getProject
 
   setGroup("AWS")
 
-  private val _region = lazyProp[String]("region")
+  private val _region = lazyProperty[String]("region")
   def region(v: Any) = _region.set(v)
 
   protected val logger = getLogger

@@ -14,19 +14,14 @@ class DeleteStacks extends AwsTask {
 
   setDescription("Deletes CloudFormation stacks that match a specified regex")
 
-  private val nameMatching = lazyProp[String]("nameMatching")
+  private val nameMatching = lazyProperty[String]("nameMatching")
   def nameMatching(v: Any): Unit = nameMatching.set(v)
 
-  override def run: IO[Unit] =
-    for {
-      r  <- region
-      c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
-      sn <- project.cfnExt.stackName.run
-      _  <- IO(c.deleteStack(new DeleteStackRequest().withStackName(sn)))
-      _  <- waitForStack(sn).run(c)
-    } yield ()
+  // TODO: implmenent safety on my default
+  private val safetyOn = lazyProperty[Boolean]("safetyOn")
+  def safetyOn(v: Any): Unit = safetyOn.set(v)
 
-   def run2: IO[Unit] =
+  override def run: IO[Unit] =
     for {
       r  <- region
       c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())

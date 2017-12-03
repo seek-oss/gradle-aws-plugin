@@ -6,12 +6,12 @@ import cats.data.Kleisli
 import cats.effect.IO
 import com.amazonaws.services.cloudformation.AmazonCloudFormation
 import com.amazonaws.services.cloudformation.model.{DescribeStacksRequest, Stack}
-import org.gradle.api.Project
 import fs2.Stream
 import fs2.Stream._
+import org.gradle.api.{GradleException, Project}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.duration._
 
 package object cloudformation {
 
@@ -34,6 +34,19 @@ package object cloudformation {
           else IO.raiseError(e)
       }
     }
+
+  def stackOutput(stackName: String, outputKey: String): Kleisli[IO, AmazonCloudFormation, String] =
+    Kleisli { c =>
+    IO(c.describeStacks(new DescribeStacksRequest().withStackName(stackName))).map { r =>
+      r.getStacks.asScala.headOption match {
+        case None    => throw new GradleException(s"Stack ${stackName} does not exist")
+        case Some(h) => h.getOutputs.asScala.find(_.getOutputKey == outputKey) match {
+          case None    => throw new GradleException(s"Stack ${stackName} does not have output key ${outputKey}")
+          case Some(o) => o.getOutputValue
+        }
+      }
+    }
+  }
 
   def describeStacks: Kleisli[Stream[IO, ?], AmazonCloudFormation, Stack] =
     Kleisli[Stream[IO, ?], AmazonCloudFormation, Stack] { c =>

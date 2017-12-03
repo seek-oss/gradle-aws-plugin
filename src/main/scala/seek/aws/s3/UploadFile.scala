@@ -11,16 +11,16 @@ class UploadFile extends Upload {
 
   setDescription("Uploads a single file to S3")
 
-  private val bucket = lazyProp[String]("bucket")
+  private val bucket = lazyProperty[String]("bucket")
   def bucket(v: Any): Unit = bucket.set(v)
 
-  private val file = lazyProp[File]("file")
+  private val file = lazyProperty[File]("file")
   def file(v: Any): Unit = file.set(v)
 
-  private val key = lazyProp[String]("key")
+  private val key = lazyProperty[String]("key")
   def key(v: Any): Unit = key.set(v)
 
-  private val failIfObjectExists = lazyProp[Boolean]("failIfObjectExists", false)
+  private val failIfObjectExists = lazyProperty[Boolean]("failIfObjectExists", false)
   def failIfObjectExists(v: Any): Unit = failIfObjectExists.set(v)
 
   override def run: IO[Unit] =

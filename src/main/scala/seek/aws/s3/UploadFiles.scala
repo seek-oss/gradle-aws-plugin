@@ -7,7 +7,7 @@ import cats.data.Kleisli
 import cats.data.Kleisli._
 import cats.effect.IO
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
-import org.gradle.api.file.{FileTree, FileTreeElement}
+import org.gradle.api.file.{FileCollection, FileTreeElement}
 
 import scala.collection.mutable
 
@@ -15,22 +15,22 @@ class UploadFiles extends Upload {
 
   setDescription("Uploads multiple files to S3")
 
-  private val bucket = lazyProp[String]("bucket")
+  private val bucket = lazyProperty[String]("bucket")
   def bucket(v: Any): Unit = bucket.set(v)
 
-  private val files = lazyProp[FileTree]("files")
+  private val files = lazyProperty[FileCollection]("files")
   def files(v: Any): Unit = files.set(v)
 
-  private val prefix = lazyProp[String]("prefix", "")
+  private val prefix = lazyProperty[String]("prefix", "")
   def prefix(v: Any): Unit = prefix.set(v)
 
-  private val failIfPrefixExists = lazyProp[Boolean]("failIfPrefixExists", false)
+  private val failIfPrefixExists = lazyProperty[Boolean]("failIfPrefixExists", false)
   def failIfPrefixExists(v: Any): Unit = failIfPrefixExists.set(v)
 
-  private val failIfObjectExists = lazyProp[Boolean]("failIfObjectExists", false)
+  private val failIfObjectExists = lazyProperty[Boolean]("failIfObjectExists", false)
   def failIfObjectExists(v: Any): Unit = failIfObjectExists.set(v)
 
-  private val cleanPrefixBeforeUpload = lazyProp[Boolean]("cleanPrefixBeforeUpload", false)
+  private val cleanPrefixBeforeUpload = lazyProperty[Boolean]("cleanPrefixBeforeUpload", false)
   def cleanPrefixBeforeUpload(v: Any): Unit = cleanPrefixBeforeUpload.set(v)
 
   override def run: IO[Unit] =
@@ -74,9 +74,9 @@ class UploadFiles extends Upload {
       case (z, (k, f)) => z.flatMap(_ => upload(bucket, k, f))
     }
 
-  private def keyFileMap(files: FileTree, prefix: String) = {
+  private def keyFileMap(files: FileCollection, prefix: String) = {
     val buf = new mutable.ArrayBuffer[FileTreeElement]()
-    files.visit(d => buf += d)
+    files.getAsFileTree.visit(d => buf += d)
     val elems = buf.filter(e => e.getFile.isFile && e.getFile.exists).toList
     elems.foldLeft(Map.empty[String, File]) { (z, e) =>
       z + (s"${prefix}/${e.getRelativePath}" -> e.getFile)

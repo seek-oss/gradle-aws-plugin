@@ -10,13 +10,13 @@ class AttachLoadBalancer extends AwsTask {
 
   setDescription("Attaches an Auto Scaling Group to a Classic or Application Load Balancer")
 
-  private val autoScalingGroup = lazyProp[String]("autoScalingGroup")
+  private val autoScalingGroup = lazyProperty[String]("autoScalingGroup")
   def autoScalingGroup(v: Any): Unit = autoScalingGroup.set(v)
 
-  private val loadBalancer = lazyProp[String]("loadBalancer")
+  private val loadBalancer = lazyProperty[String]("loadBalancer")
   def loadBalancer(v: Any): Unit = loadBalancer.set(v)
 
-  private val targetGroupArn = lazyProp[String]("targetGroupArn")
+  private val targetGroupArn = lazyProperty[String]("targetGroupArn")
   def targetGroupArn(v: Any): Unit = targetGroupArn.set(v)
 
   override def run: IO[Unit] =
