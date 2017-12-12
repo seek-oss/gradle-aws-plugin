@@ -47,6 +47,7 @@ dependencies {
     compile "com.amazonaws:aws-java-sdk-s3:${awsVersion}"
     compile "com.amazonaws:aws-java-sdk-autoscaling:${awsVersion}"
     compile "com.amazonaws:aws-java-sdk-cloudformation:${awsVersion}"
+    compile "com.amazonaws:aws-java-sdk-ssm:${awsVersion}"
 
     compileOnly "com.github.dwickern:scala-nameof_${scalaBuildVersion}:1.0.3"
 

@@ -13,8 +13,9 @@ import org.gradle.normalization.InputNormalizationHandler
 import org.gradle.process.{ExecSpec, JavaExecSpec}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
-class TestProject(properties: Map[String, AnyRef] = Map.empty) extends Project {
+class TestProject(val properties: mutable.Map[String, String] = mutable.Map.empty) extends Project {
   implicit val project = this
 
   val getProperties = properties.asJava
