@@ -6,12 +6,11 @@ import java.io.File
 import cats.data.Kleisli
 import cats.data.Kleisli._
 import cats.effect.IO
-import com.amazonaws.services.cloudformation.model.{CreateStackRequest, Parameter, Tag, UpdateStackRequest}
+import com.amazonaws.services.cloudformation.model._
 import com.amazonaws.services.cloudformation.{AmazonCloudFormation, AmazonCloudFormationClientBuilder}
 import org.apache.commons.codec.Charsets.UTF_8
 import org.gradle.api.Project
-import pureconfig.{CamelCase, ConfigFieldMapping, PascalCase}
-import seek.aws.cloudformation.CloudFormationTemplate._
+import seek.aws.cloudformation.CloudFormationTemplate.parseTemplateParameters
 import seek.aws.cloudformation.instances._
 import seek.aws.cloudformation.syntax._
 import seek.aws.lookup.ProjectLookup
@@ -64,7 +63,11 @@ class CreateOrUpdateStack extends AwsTask {
         .withCapabilities("CAPABILITY_IAM")
         .withCapabilities("CAPABILITY_NAMED_IAM")
       if (s.policyBody.isDefined) req.setStackPolicyBody(s.policyBody.get)
-      IO(c.updateStack(req))
+      IO(c.updateStack(req)).attempt.map {
+        case Right(_) => ()
+        case Left(e: AmazonCloudFormationException) if e.getMessage.startsWith("No updates are to be performed") => ()
+        case Left(th) => throw th
+      }
     }
 
   private case class StackProperties(

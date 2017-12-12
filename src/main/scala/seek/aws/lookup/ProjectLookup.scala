@@ -22,9 +22,9 @@ object ProjectLookup {
 
   private val cache = mutable.Map.empty[Project, Config]
 
-  def lookup(p: Project, key: String, overrides: Map[String, String] = Map.empty): IO[String] =
+  def lookup(p: Project, key: String, underrides: Map[String, String] = Map.empty): IO[String] =
     if (p.lookupExt.allowProjectOverrides && p.hasProperty(key)) IO.pure(p.property(key).toString)
-    else overrides.get(key) match {
+    else underrides.get(key) match {
       case Some(v) => IO.pure(v)
       case None    => lookupCache(p, key)
     }

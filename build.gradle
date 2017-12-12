@@ -52,6 +52,10 @@ dependencies {
 
     scalaCompiler "org.scalamacros:paradise_${scalaVersion}:2.1.1"
     scalaCompiler "org.spire-math:kind-projector_${scalaBuildVersion}:0.9.4"
+
+    testCompile "org.scalatest:scalatest_${scalaBuildVersion}:3.0.4"
+    testCompile "org.scalacheck:scalacheck_${scalaBuildVersion}:1.13.5"
+    testRuntime 'org.pegdown:pegdown:1.6.0'
 }
 
 def scalaCompileOptions = ['-language:implicitConversions', '-language:higherKinds']
