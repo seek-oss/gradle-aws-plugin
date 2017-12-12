@@ -13,6 +13,10 @@ class LookupPluginExtension(implicit project: Project) {
 
   private[aws] val files = mutable.ArrayBuffer.empty[FileCollection]
   def addFiles(fs: FileCollection): Unit = files += fs
+  def files(fs: FileCollection): Unit = {
+    files.clear()
+    addFiles(fs)
+  }
 
   private[aws] var allowProjectOverrides: Boolean = true
   def allowProjectOverrides(v: Boolean): Unit = allowProjectOverrides = v

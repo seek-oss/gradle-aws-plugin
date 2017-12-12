@@ -2,6 +2,7 @@ package seek.aws
 package lookup
 
 import cats.effect.IO
+import com.typesafe.config.ConfigException.Missing
 import com.typesafe.config.{Config, ConfigFactory}
 import org.gradle.api.{GradleException, Project}
 import seek.aws.lookup.instances._
@@ -17,33 +18,41 @@ class ProjectLookup(key: String) extends Lookup {
     ProjectLookup.lookup(p, key)
 }
 
-class ProjectLookupException(key: String) extends GradleException(
-  s"Could not find a project key with name '${key}'")
-
 object ProjectLookup {
 
-  // Impure
   private val cache = mutable.Map.empty[Project, Config]
 
-  def lookup(p: Project, key: String): IO[String] =
-    findOverride(p, key) match {
+  def lookup(p: Project, key: String, overrides: Map[String, String] = Map.empty): IO[String] =
+    if (p.lookupExt.allowProjectOverrides && p.hasProperty(key)) IO.pure(p.property(key).toString)
+    else overrides.get(key) match {
       case Some(v) => IO.pure(v)
-      case None    =>
-        cache.get(p) match {
-          case Some(c) => IO(c.getString(key))
-          case None    => buildCache(p).flatMap(_ => lookup(p, key))
-        }
+      case None    => lookupCache(p, key)
     }
 
-  def lookup2(p: Project, key: String, overrides: Map[String, String] = Map.empty): IO[String] =
-    if (p.lookupExt.allowProjectOverrides && p.hasProperty(key)) Some(p.property(key).toString)
+  private def lookupCache(p: Project, key: String): IO[String] =
+    cache.get(p) match {
+      case Some(c) =>
+        lookupConfig(c, keyVariations(key))
+      case None    =>
+        buildCache(p)
+        lookupCache(p, key)
+    }
 
-  private def findOverride(p: Project, key: String): Option[String] =
-    if (p.lookupExt.allowProjectOverrides && p.hasProperty(key)) Some(p.property(key).toString)
-    else None
+  private def lookupConfig(config: Config, keyVariations: List[String]): IO[String] = {
+    def go(ks: List[String]): IO[String] =
+      ks match {
+        case Nil    => raiseError(s"Could not find configuration key ${keyVariations.head}. Tried variations: ${keyVariations.mkString(", ")}")
+        case h :: t => IO(config.getString(h)).attempt.flatMap {
+          case Right(v)         => IO.pure(v)
+          case Left(_: Missing) => go(t)
+          case Left(th)         => IO.raiseError(th)
+        }
+      }
+    go(keyVariations)
+  }
 
-  private def buildCache(p: Project): IO[Unit] =
-    IO(cache.put(p, buildConfig(p)))
+  private def buildCache(p: Project): Unit =
+    cache.put(p, buildConfig(p))
 
   private def buildConfig(p: Project): Config = {
     @tailrec
@@ -52,18 +61,20 @@ object ProjectLookup {
         case h :: t =>
           p.getProperties.asScala.get(h).map(_.asInstanceOf[String]) match {
             case Some(v: String) if v.nonEmpty => go(t, acc + v + ".")
-            case _ => throw new ProjectLookupException(h)
+            case _ => throw new GradleException(
+              s"Could not find a project property with name ${h}")
           }
-        case _ => acc
+        case _ => acc.stripSuffix(".")
       }
-    val fname = go(p.lookupExt.key.split(".").toList)
+    val fname = go(p.lookupExt.key.split('.').toList)
     val matching = p.lookupExt.files.reverse.map(_.getFiles.asScala.filter(_.getName == s"${fname}.conf"))
     val configs = matching.toList.flatMap(_.toList).map(f => ConfigFactory.parseFile(f))
-    configs.foldLeft(ConfigFactory.empty())((z, c) => z.withFallback(c))
+    val c = configs.foldLeft(ConfigFactory.empty())((z, c) => z.withFallback(c))
+
+    println(c)
+    c
   }
+
+  private def keyVariations(camelCaseKey: String): List[String] =
+    List(camelCaseKey, camelToKebabCase(camelCaseKey), camelToDotCase(camelCaseKey), camelToSnakeCase(camelCaseKey))
 }
-
-// TODO: Make this class utilise the lookupIndex as described in the aws plugin extension.
-// It will need to cache by project after it creates an index for each project it's given on run
-// It will need to read in all the files in  the lookupFiles and parse them out normalising the casing to camelCase
-

@@ -3,33 +3,20 @@ package seek
 import cats.data.Kleisli
 import cats.effect.IO
 import org.gradle.api.{GradleException, Project}
-import simulacrum.typeclass
-
-import scala.collection.JavaConverters._
+import pureconfig._
 
 package object aws {
 
-  @typeclass trait HasGradleProperties[A] {
-    def properties(a: A): Map[String, String]
-  }
-
-  object syntax extends
-    HasGradleProperties.ToHasGradlePropertiesOps with
-    HasAwsPluginExtension.ToHasAwsPluginExtensionOps
+  object syntax extends HasAwsPluginExtension.ToHasAwsPluginExtensionOps
 
   object instances {
-    implicit val projectHasGradleProperties = new HasGradleProperties[Project] {
-      def properties(p: Project) =
-        p.getProperties.asScala.mapValues(_.toString).toMap
-    }
-
     implicit val projectHasAwsPluginExtension = new HasAwsPluginExtension[Project] {
       def awsExt(p: Project) =
         p.getExtensions.getByType(classOf[AwsPluginExtension])
     }
   }
 
-  def raiseError(msg: String): IO[Unit] =
+  def raiseError[A](msg: String): IO[A] =
     IO.raiseError(new GradleException(msg))
 
   def maybeRun[C](
@@ -47,4 +34,17 @@ package object aws {
           }
       }
     }
+
+  def pascalToCamelCase(s: String): String =
+    ConfigFieldMapping(PascalCase, CamelCase).apply(s)
+
+  def camelToKebabCase(s: String): String =
+    ConfigFieldMapping(CamelCase, KebabCase).apply(s)
+
+  def camelToSnakeCase(s: String): String =
+    ConfigFieldMapping(CamelCase, SnakeCase).apply(s)
+
+  def camelToDotCase(s: String): String =
+    ConfigFieldMapping(CamelCase, new StringDelimitedNamingConvention(".")).apply(s)
+
 }

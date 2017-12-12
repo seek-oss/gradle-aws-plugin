@@ -27,10 +27,9 @@ class CreateOrUpdateStack extends AwsTask {
     for {
       r  <- region
       c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
-      sn <- project.cfnExt.stackName.run
       sp <- StackProperties(project)
       _  <- createOrUpdate(sp).run(c)
-      _  <- waitForStack(sn).run(c)
+      _  <- waitForStack(sp.name).run(c)
     } yield ()
 
   private def createOrUpdate(s: StackProperties): Kleisli[IO, AmazonCloudFormation, Unit] = {
@@ -100,16 +99,11 @@ class CreateOrUpdateStack extends AwsTask {
         ps <- resolveStackParameters(project, tf, ps)
       } yield StackProperties(sn, tb, pb, ps, ts)
 
-    private def resolveStackParameters(project: Project, templateFile: File, parameterOverrides: Map[String, String]): IO[Map[String, String]] =
+    private def resolveStackParameters(
+        project: Project, templateFile: File, parameterOverrides: Map[String, String]): IO[Map[String, String]] =
       parseTemplateParameters(templateFile).flatMap(_.foldLeft(IO.pure(Map.empty[String, String])) { (z, p) =>
-        val pn = ConfigFieldMapping(PascalCase, CamelCase).apply(p.name)
-        val pv =
-          if (project.hasProperty(pn))
-            IO.pure(project.property(pn).toString)
-          else if (parameterOverrides.contains(pn))
-            IO.pure(parameterOverrides(pn))
-          else ProjectLookup.lookup(project, pn)
-        z.flatMap(m => pv.map(v => m + (pn -> v)))
+        val pv = ProjectLookup.lookup(project, pascalToCamelCase(p.name), parameterOverrides)
+        z.flatMap(m => pv.map(v => m + (p.name -> v)))
       })
 
     private def slurp(f: File): IO[String] =

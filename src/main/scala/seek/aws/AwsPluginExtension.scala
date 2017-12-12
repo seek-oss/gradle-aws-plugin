@@ -1,10 +1,7 @@
 package seek.aws
 
 import org.gradle.api.Project
-import org.gradle.api.file.FileCollection
 import simulacrum.typeclass
-
-import scala.collection.mutable
 
 class AwsPluginExtension(implicit project: Project) {
   import HasLazyProperties._
@@ -16,12 +13,6 @@ class AwsPluginExtension(implicit project: Project) {
 
   private[aws] val profile = lazyProperty[String]("profile", "default")
   def profile(v: Any): Unit = profile.set(v)
-
-  private[aws] var lookupBy: String = "environment"
-  def lookupBy(v: String): Unit = lookupBy = v
-
-  private[aws] val lookupFiles = mutable.ArrayBuffer.empty[FileCollection]
-  def addLookupFiles(fs: FileCollection): Unit = lookupFiles += fs
 }
 
 @typeclass trait HasAwsPluginExtension[A] {
