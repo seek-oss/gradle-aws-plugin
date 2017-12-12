@@ -13,7 +13,7 @@ import org.gradle.api.Project
 import seek.aws.cloudformation.CloudFormationTemplate.parseTemplateParameters
 import seek.aws.cloudformation.instances._
 import seek.aws.cloudformation.syntax._
-import seek.aws.config.ProjectLookup
+import seek.aws.config.LookupProject
 
 import scala.collection.JavaConverters._
 import scala.io.Source._
@@ -105,7 +105,7 @@ class CreateOrUpdateStack extends AwsTask {
     private def resolveStackParameters(
         project: Project, templateFile: File, parameterOverrides: Map[String, String]): IO[Map[String, String]] =
       parseTemplateParameters(templateFile).flatMap(_.foldLeft(IO.pure(Map.empty[String, String])) { (z, p) =>
-        val pv = ProjectLookup.lookup(project, pascalToCamelCase(p.name), parameterOverrides)
+        val pv = LookupProject.lookup(project, pascalToCamelCase(p.name), parameterOverrides)
         z.flatMap(m => pv.map(v => m + (p.name -> v)))
       })
 

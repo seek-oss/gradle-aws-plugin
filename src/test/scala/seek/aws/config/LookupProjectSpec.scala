@@ -3,9 +3,9 @@ package config
 
 import java.io.File
 
-import seek.aws.config.ProjectLookup.lookup
+import seek.aws.config.LookupProject.lookup
 
-class ProjectLookupSpec extends SeekSpec {
+class LookupProjectSpec extends SeekSpec {
 
   "A ProjectLookup" - {
     val projectProperties = Map("environment" -> "development", "region" -> "us-east-1")

@@ -7,7 +7,7 @@ import seek.aws.cloudformation.stackOutput
 import seek.aws.instances._
 import seek.aws.syntax._
 
-class CloudFormationStackOutputLookup(stackName: String, outputKey: String) extends Lookup {
+class LookupStackOutput(stackName: String, outputKey: String) extends Lookup {
 
   def run(p: Project): IO[String] =
     for {

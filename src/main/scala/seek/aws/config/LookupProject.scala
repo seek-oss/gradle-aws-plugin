@@ -12,13 +12,13 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-class ProjectLookup(key: String) extends Lookup {
+class LookupProject(key: String) extends Lookup {
 
   def run(p: Project): IO[String] =
-    ProjectLookup.lookup(p, key)
+    LookupProject.lookup(p, key)
 }
 
-object ProjectLookup {
+object LookupProject {
 
   private val cache = mutable.Map.empty[Project, Config]
 

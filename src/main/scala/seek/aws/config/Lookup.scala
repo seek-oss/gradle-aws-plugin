@@ -9,8 +9,11 @@ trait Lookup {
 
 object Lookup {
   def lookup(key: String): Lookup =
-    new ProjectLookup(key)
+    new LookupProject(key)
 
   def stackOutput(stackName: String, key: String): Lookup =
-    new CloudFormationStackOutputLookup(stackName, key)
+    new LookupStackOutput(stackName, key)
+
+  def parameterStore(key: String): Lookup =
+    new LookupParameterStore(key)
 }
