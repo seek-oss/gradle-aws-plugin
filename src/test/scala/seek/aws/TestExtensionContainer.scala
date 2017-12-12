@@ -4,18 +4,18 @@ import org.gradle.api.{Action, Project}
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.reflect.TypeOf
 import seek.aws.cloudformation.CloudFormationPluginExtension
-import seek.aws.lookup.LookupPluginExtension
+import seek.aws.config.ConfigPluginExtension
 
 class TestExtensionContainer(implicit project: Project) extends ExtensionContainer {
 
   val awsExt = new AwsPluginExtension
   val cfnExt = new CloudFormationPluginExtension
-  val lookupExt = new LookupPluginExtension
+  val lookupExt = new ConfigPluginExtension
 
   def getByType[T](t: Class[T]) = {
     val awsExtClass = classOf[AwsPluginExtension]
     val cfnExtClass = classOf[CloudFormationPluginExtension]
-    val lookupExtClass = classOf[LookupPluginExtension]
+    val lookupExtClass = classOf[ConfigPluginExtension]
     t match {
       case `awsExtClass`    => awsExt.asInstanceOf[T]
       case `cfnExtClass`    => cfnExt.asInstanceOf[T]

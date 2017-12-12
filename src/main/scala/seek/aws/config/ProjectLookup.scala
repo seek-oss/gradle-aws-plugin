@@ -1,12 +1,12 @@
 package seek.aws
-package lookup
+package config
 
 import cats.effect.IO
 import com.typesafe.config.ConfigException.Missing
 import com.typesafe.config.{Config, ConfigFactory}
 import org.gradle.api.{GradleException, Project}
-import seek.aws.lookup.instances._
-import seek.aws.lookup.syntax._
+import seek.aws.config.instances._
+import seek.aws.config.syntax._
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -23,7 +23,7 @@ object ProjectLookup {
   private val cache = mutable.Map.empty[Project, Config]
 
   def lookup(p: Project, key: String, underrides: Map[String, String] = Map.empty): IO[String] =
-    if (p.lookupExt.allowProjectOverrides && p.hasProperty(key)) IO.pure(p.property(key).toString)
+    if (p.configExt.allowProjectOverrides && p.hasProperty(key)) IO.pure(p.property(key).toString)
     else underrides.get(key) match {
       case Some(v) => IO.pure(v)
       case None    => lookupCache(p, key)
@@ -65,8 +65,8 @@ object ProjectLookup {
           }
         case _ => acc.stripSuffix(".")
       }
-    val filename = go(p.lookupExt.key.split('.').toList) + ".conf"
-    val configFiles = p.lookupExt.files.reverse.map(_.getFiles.asScala).flatMap(_.toList).toList
+    val filename = go(p.configExt.lookupBy.split('.').toList) + ".conf"
+    val configFiles = p.configExt.files.reverse.map(_.getFiles.asScala).flatMap(_.toList).toList
     val configObjects = configFiles.filter(_.getName == filename).map(f => IO(ConfigFactory.parseFile(f)))
     configObjects.foldLeft(IO.pure(ConfigFactory.empty()))((z, c) => for { zz <- z; cc <- c } yield zz.withFallback(cc))
   }

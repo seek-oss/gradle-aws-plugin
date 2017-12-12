@@ -1,9 +1,9 @@
 package seek.aws
-package lookup
+package config
 
 import java.io.File
 
-import seek.aws.lookup.ProjectLookup.lookup
+import seek.aws.config.ProjectLookup.lookup
 
 class ProjectLookupSpec extends SeekSpec {
 
@@ -13,7 +13,7 @@ class ProjectLookupSpec extends SeekSpec {
       new File("src/test/resources/development.conf"),
       new File("src/test/resources/development.us-east-1.conf")))
 
-    "when the default environment lookup key is used" - {
+    "when the default environment lookup index is used" - {
       val project = new TestProject(projectProperties)
       project.getExtensions.lookupExt.files(configFiles)
 
@@ -25,10 +25,10 @@ class ProjectLookupSpec extends SeekSpec {
       }
     }
 
-    "when a multi-dimensional environment.region key is used" - {
+    "when a multi-dimensional environment.region index is used" - {
       val project = new TestProject(projectProperties)
       project.getExtensions.lookupExt.files(configFiles)
-      project.getExtensions.lookupExt.key("environment.region")
+      project.getExtensions.lookupExt.lookupBy("environment.region")
 
       "keys are looked up in a file matching the environment and region name" in {
         lookup(project, "camelCaseKey").unsafeRunSync() should equal ("regionSpecificCamelCaseValue")

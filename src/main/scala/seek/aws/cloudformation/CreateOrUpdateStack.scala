@@ -13,7 +13,7 @@ import org.gradle.api.Project
 import seek.aws.cloudformation.CloudFormationTemplate.parseTemplateParameters
 import seek.aws.cloudformation.instances._
 import seek.aws.cloudformation.syntax._
-import seek.aws.lookup.ProjectLookup
+import seek.aws.config.ProjectLookup
 
 import scala.collection.JavaConverters._
 import scala.io.Source._

@@ -1,4 +1,4 @@
-package seek.aws.lookup
+package seek.aws.config
 
 import cats.effect.IO
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder
