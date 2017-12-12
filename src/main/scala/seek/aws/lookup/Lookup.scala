@@ -1,8 +1,7 @@
-package seek.aws
+package seek.aws.lookup
 
 import cats.effect.IO
 import org.gradle.api._
-import seek.aws.cloudformation.CloudFormationStackOutputLookup
 
 trait Lookup {
   def run(p: Project): IO[String]

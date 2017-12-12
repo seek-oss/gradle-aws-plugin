@@ -20,14 +20,8 @@ class CloudFormationPluginExtension(implicit project: Project) {
   private[cloudformation] val templateFile = lazyProperty[File]("templateFile")
   def templateFile(v: Any): Unit = templateFile.set(v)
 
-  private[cloudformation] val templateUrl = lazyProperty[String]("templateUrl")
-  def templateUrl(v: Any): Unit = templateUrl.set(v)
-
   private[cloudformation] val policyFile = lazyProperty[File]("policyFile")
   def policyFile(v: Any): Unit = policyFile.set(v)
-
-  private[cloudformation] val policyUrl = lazyProperty[String]("policyUrl")
-  def policyUrl(v: Any): Unit = policyUrl.set(v)
 
   private var _parameters: Map[String, Any] = Map()
   def parameters(v: java.util.Map[String, Any]): Unit = _parameters = v.asScala.toMap

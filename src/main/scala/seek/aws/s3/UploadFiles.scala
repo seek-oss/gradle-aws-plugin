@@ -49,6 +49,8 @@ class UploadFiles extends Upload {
       _  <- uploadAll(b, mx).run(c)
     } yield ()
 
+  // TODO: Prefix needs to be normalised in case it's an empty string
+
   private def maybeFailIfPrefixExists(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
     maybeRun(failIfPrefixExists, exists(bucket, prefix),
       raiseError(s"Prefix ${prefix} already exists in bucket ${bucket}"))

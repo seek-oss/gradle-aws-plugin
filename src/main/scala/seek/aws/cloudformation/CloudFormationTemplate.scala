@@ -3,8 +3,8 @@ package seek.aws.cloudformation
 import java.io.File
 
 import cats.effect.IO
-import cats.syntax.either._
 import io.circe.Json
+import org.gradle.api.GradleException
 
 import scala.io.Source._
 
@@ -12,29 +12,32 @@ object CloudFormationTemplate {
 
   case class Parameter(name: String, required: Boolean)
 
-  def parseTemplate(f: File): IO[Either[Throwable, Json]] =
+  def parseTemplate(f: File): IO[Json] =
     IO(fromFile(f).mkString).map { s =>
-      if (f.getName.endsWith(".json"))
-        io.circe.parser.parse(s)
-      else io.circe.yaml.parser.parse(s)
+      val json =
+        if (f.getName.endsWith(".json"))
+          io.circe.parser.parse(s)
+        else io.circe.yaml.parser.parse(s)
+      json match {
+        case Left(th) => throw th
+        case Right(j) => j
+      }
     }
 
-  def parseParameters(template: File): IO[Either[Throwable, List[Parameter]]] =
-    parseTemplate(template).map {
-      case Left(th) => Left(th)
-      case Right(j) =>
-        (j \\ "Parameters").headOption match {
-          case None    => Right(Nil)
-          case Some(h) =>
-            h.asObject match {
-              case None    => Left(new Exception("Template has malformed parameters"))
-              case Some(o) =>
-                o.toMap.foldRight(List.empty[Parameter].asRight[Throwable]) {
-                  case ((k, v), z) =>
-                    val required = (v \\ "Default").isEmpty
-                    z.map(ps => Parameter(k, required) :: ps)
-                }
-            }
-        }
+  def parseTemplateParameters(f: File): IO[List[Parameter]] =
+    parseTemplate(f).map { j =>
+      (j \\ "Parameters").headOption match {
+        case None    => Nil
+        case Some(h) =>
+          h.asObject match {
+            case None    => throw new GradleException("Template has malformed parameters")
+            case Some(o) =>
+              o.toMap.foldRight(List.empty[Parameter]) {
+                case ((k, v), z) =>
+                  val required = (v \\ "Default").isEmpty
+                  Parameter(k, required) :: z
+              }
+          }
+      }
     }
 }

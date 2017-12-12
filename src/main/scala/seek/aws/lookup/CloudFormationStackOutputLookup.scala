@@ -1,9 +1,9 @@
-package seek.aws.cloudformation
+package seek.aws.lookup
 
 import cats.effect.IO
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder
 import org.gradle.api.Project
-import seek.aws.Lookup
+import seek.aws.cloudformation.stackOutput
 import seek.aws.instances._
 import seek.aws.syntax._
 

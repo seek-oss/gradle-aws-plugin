@@ -4,6 +4,7 @@ import cats.effect.IO
 import groovy.lang.Closure
 import org.gradle.api._
 import seek.aws.HasLazyProperties.lazyProperty
+import seek.aws.lookup.Lookup
 
 class LazyProperty[A](name: String, default: Option[A] = None)(project: Project) {
 

@@ -11,8 +11,8 @@ repositories {
 }
 
 ext {
-    awsVersion = '1.11.230'
-    circeVersion = '0.8.0'
+    awsVersion = '1.11.241'
+    circeVersion = '0.9.0-M2'
 }
 
 configurations {
@@ -39,7 +39,7 @@ dependencies {
     compile "io.circe:circe-generic_${scalaBuildVersion}:${circeVersion}"
     compile "io.circe:circe-generic-extras_${scalaBuildVersion}:${circeVersion}"
     compile "io.circe:circe-parser_${scalaBuildVersion}:${circeVersion}"
-    compile "io.circe:circe-yaml_${scalaBuildVersion}:0.6.1"
+    compile "io.circe:circe-yaml_${scalaBuildVersion}:0.7.0-M1"
     compile "com.typesafe:config:1.3.0"
     compile "com.github.pureconfig:pureconfig_${scalaBuildVersion}:0.7.2"
     compile "com.github.mpilquist:simulacrum_${scalaBuildVersion}:0.11.0"
