@@ -12,7 +12,7 @@ class CloudFormationStackOutputLookup(stackName: String, outputKey: String) exte
   def run(p: Project): IO[String] =
     for {
       r <- p.awsExt.region.run
-      c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
+      c <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
       o <- stackOutput(stackName, outputKey).run(c)
     } yield o
 }

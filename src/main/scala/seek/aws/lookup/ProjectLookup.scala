@@ -29,14 +29,13 @@ object ProjectLookup {
       case None    => lookupCache(p, key)
     }
 
-  private def lookupCache(p: Project, key: String): IO[String] =
-    cache.get(p) match {
-      case Some(c) =>
-        lookupConfig(c, keyVariations(key))
-      case None    =>
-        buildCache(p)
-        lookupCache(p, key)
+  private def lookupCache(p: Project, key: String): IO[String] = {
+    val config = cache.get(p) match {
+      case Some(c) => IO.pure(c)
+      case None    => updateCache(p)
     }
+    config.flatMap(c => lookupConfig(c, keyVariations(key)))
+  }
 
   private def lookupConfig(config: Config, keyVariations: List[String]): IO[String] = {
     def go(ks: List[String]): IO[String] =
@@ -51,10 +50,10 @@ object ProjectLookup {
     go(keyVariations)
   }
 
-  private def buildCache(p: Project): Unit =
-    cache.put(p, buildConfig(p))
+  private def updateCache(p: Project): IO[Config] =
+    buildConfig(p).map { c => cache.put(p, c); c }
 
-  private def buildConfig(p: Project): Config = {
+  private def buildConfig(p: Project): IO[Config] = {
     @tailrec
     def go(parts: List[String], acc: String = ""): String =
       parts match {
@@ -66,13 +65,10 @@ object ProjectLookup {
           }
         case _ => acc.stripSuffix(".")
       }
-    val fname = go(p.lookupExt.key.split('.').toList)
-    val matching = p.lookupExt.files.reverse.map(_.getFiles.asScala.filter(_.getName == s"${fname}.conf"))
-    val configs = matching.toList.flatMap(_.toList).map(f => ConfigFactory.parseFile(f))
-    val c = configs.foldLeft(ConfigFactory.empty())((z, c) => z.withFallback(c))
-
-    println(c)
-    c
+    val filename = go(p.lookupExt.key.split('.').toList) + ".conf"
+    val configFiles = p.lookupExt.files.reverse.map(_.getFiles.asScala).flatMap(_.toList).toList
+    val configObjects = configFiles.filter(_.getName == filename).map(f => IO(ConfigFactory.parseFile(f)))
+    configObjects.foldLeft(IO.pure(ConfigFactory.empty()))((z, c) => for { zz <- z; cc <- c } yield zz.withFallback(cc))
   }
 
   private def keyVariations(camelCaseKey: String): List[String] =

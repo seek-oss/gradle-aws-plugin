@@ -14,11 +14,13 @@ import org.gradle.process.{ExecSpec, JavaExecSpec}
 
 import scala.collection.JavaConverters._
 
-class TestProject(properties: Map[String, Any]) extends Project {
+class TestProject(properties: Map[String, AnyRef] = Map.empty) extends Project {
   implicit val project = this
 
-  def getProperties = properties.asJava
-  def getExtensions = new TestExtensionContainer
+  val getProperties = properties.asJava
+  val getExtensions = new TestExtensionContainer
+  def hasProperty(propertyName: String) = properties.contains(propertyName)
+  def property(propertyName: String) = properties(propertyName)
 
   def getNormalization = ???
   def container[T](`type`: Class[T]) = ???
@@ -37,7 +39,6 @@ class TestProject(properties: Map[String, Any]) extends Project {
   def normalization(configuration: Action[_ >: InputNormalizationHandler]) = ???
   def getPath = ???
   def property[T](clazz: Class[T]) = ???
-  def property(propertyName: String) = ???
   def getRootDir = ???
   def getLogging = ???
   def mkdir(path: scala.Any) = ???
@@ -97,7 +98,6 @@ class TestProject(properties: Map[String, Any]) extends Project {
   def getRootProject = ???
   def tarTree(tarPath: scala.Any) = ???
   def sync(action: Action[_ >: CopySpec]) = ???
-  def hasProperty(propertyName: String) = ???
   def getBuildFile = ???
   def task(name: String) = ???
   def task(args: util.Map[String, _], name: String) = ???
