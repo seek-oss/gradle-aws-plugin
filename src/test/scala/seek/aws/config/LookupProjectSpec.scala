@@ -75,6 +75,18 @@ class LookupProjectSpec extends SeekSpec {
         lookup(project, "camelCaseKey").unsafeRunSync() should equal ("camelCaseValue")
       }
      }
+
+    "when there are multiple configuration files with the same" - {
+      val project = buildGradleProject
+      project.getExtensions.lookupExt.files(new TestFileCollection(Set()))
+      project.getExtensions.lookupExt.addFiles(new TestFileCollection(Set(new File("src/test/resources/development.conf"))))
+      project.getExtensions.lookupExt.addFiles(new TestFileCollection(Set(new File("src/test/resources/subproject/development.conf"))))
+
+      "configuration files are layered in LIFO order" in {
+        lookup(project, "camelCaseKey").unsafeRunSync() should equal ("subprojectSpecificCamelCaseValue")
+        lookup(project, "kebab-case-key").unsafeRunSync() should equal ("kebab-case-value")
+      }
+    }
   }
 
   def buildGradleProject: TestProject = {

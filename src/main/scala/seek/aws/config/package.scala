@@ -8,7 +8,7 @@ package object config {
 
   object instances {
     implicit val projectHasConfigPluginExtension = new HasConfigPluginExtension[Project] {
-      def configExt(p: Project) =
+      def cfgExt(p: Project) =
         p.getExtensions.getByType(classOf[ConfigPluginExtension])
     }
   }

@@ -23,7 +23,7 @@ object LookupProject {
   private val cache = mutable.Map.empty[Project, Config]
 
   def lookup(p: Project, key: String, underrides: Map[String, String] = Map.empty): IO[String] =
-    if (p.configExt.allowProjectOverrides && p.hasProperty(key)) IO.pure(p.property(key).toString)
+    if (p.cfgExt.allowProjectOverrides && p.hasProperty(key)) IO.pure(p.property(key).toString)
     else underrides.get(key) match {
       case Some(v) => IO.pure(v)
       case None    => lookupCache(p, key)
@@ -65,8 +65,8 @@ object LookupProject {
           }
         case _ => acc.stripSuffix(".")
       }
-    val filename = go(p.configExt.lookupBy.split('.').toList) + ".conf"
-    val configFiles = p.configExt.files.reverse.map(_.getFiles.asScala).flatMap(_.toList).toList
+    val filename = go(p.cfgExt.lookupBy.split('.').toList) + ".conf"
+    val configFiles = p.cfgExt.files.reverse.map(_.getFiles.asScala).flatMap(_.toList).toList
     val configObjects = configFiles.filter(_.getName == filename).map(f => IO(ConfigFactory.parseFile(f)))
     configObjects.foldLeft(IO.pure(ConfigFactory.empty()))((z, c) => for { zz <- z; cc <- c } yield zz.withFallback(cc))
   }

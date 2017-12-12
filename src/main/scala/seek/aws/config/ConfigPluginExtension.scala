@@ -23,5 +23,5 @@ class ConfigPluginExtension(implicit project: Project) {
 }
 
 @typeclass trait HasConfigPluginExtension[A] {
-  def configExt(a: A): ConfigPluginExtension
+  def cfgExt(a: A): ConfigPluginExtension
 }
