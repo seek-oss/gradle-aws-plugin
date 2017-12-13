@@ -2,7 +2,7 @@ apply plugin: 'scala'
 apply plugin: 'maven'
 
 group = 'seek.eng'
-version = "0.1.${buildNumber}"
+version = "0.0.${buildNumber}"
 
 repositories {
     mavenLocal()

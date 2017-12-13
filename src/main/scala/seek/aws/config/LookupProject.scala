@@ -1,6 +1,8 @@
 package seek.aws
 package config
 
+import java.io.File
+
 import cats.effect.IO
 import com.typesafe.config.ConfigException.Missing
 import com.typesafe.config.{Config, ConfigFactory}
@@ -18,9 +20,12 @@ class LookupProject(key: String) extends Lookup {
     LookupProject.lookup(p, key)
 }
 
+class LookupProjectFailed(key: String) extends Exception(s"Could not find value for configuration key ${key}")
+
 object LookupProject {
 
   private val cache = mutable.Map.empty[Project, Config]
+  private val validConfigExtensions = "(conf|json|properties)"
 
   def lookup(p: Project, key: String, underrides: Map[String, String] = Map.empty): IO[String] =
     if (p.cfgExt.allowProjectOverrides && p.hasProperty(key)) IO.pure(p.property(key).toString)
@@ -40,7 +45,7 @@ object LookupProject {
   private def lookupConfig(config: Config, keyVariations: List[String]): IO[String] = {
     def go(ks: List[String]): IO[String] =
       ks match {
-        case Nil    => raiseError(s"Could not find configuration key ${keyVariations.head}. Tried variations: ${keyVariations.mkString(", ")}")
+        case Nil    => IO.raiseError(new LookupProjectFailed(keyVariations.head))
         case h :: t => IO(config.getString(h)).attempt.flatMap {
           case Right(v)         => IO.pure(v)
           case Left(_: Missing) => go(t)
@@ -50,27 +55,45 @@ object LookupProject {
     go(keyVariations)
   }
 
+  private def keyVariations(camelCaseKey: String): List[String] =
+    List(camelCaseKey, camelToKebabCase(camelCaseKey), camelToDotCase(camelCaseKey), camelToSnakeCase(camelCaseKey))
+
   private def updateCache(p: Project): IO[Config] =
     buildConfig(p).map { c => cache.put(p, c); c }
 
   private def buildConfig(p: Project): IO[Config] = {
+    val configObjects = p.cfgExt.files
+      .reverse
+      .map(_.getFiles.asScala)
+      .flatMap(_.toList.filter(configFileFilter(p)).sortWith(configFileSort(p)))
+      .map(f => IO(ConfigFactory.parseFile(f)))
+      .toList
+    configObjects.foldLeft(IO.pure(ConfigFactory.empty())) { (z, c) =>
+      for {
+        zz <- z
+        cc <- c
+      } yield zz.withFallback(cc)
+    }
+  }
+
+  private def configFileFilter(p: Project)(f: File): Boolean = {
     @tailrec
-    def go(parts: List[String], acc: String = ""): String =
+    def buildConfigName(parts: List[String], acc: String = ""): String =
       parts match {
         case h :: t =>
           p.getProperties.asScala.get(h).map(_.asInstanceOf[String]) match {
-            case Some(v: String) if v.nonEmpty => go(t, acc + v + ".")
+            case Some(v: String) if v.nonEmpty => buildConfigName(t, acc + v + ".")
             case _ => throw new GradleException(
               s"Could not find a project property with name ${h}")
           }
         case _ => acc.stripSuffix(".")
       }
-    val filename = go(p.cfgExt.lookupBy.split('.').toList) + ".conf"
-    val configFiles = p.cfgExt.files.reverse.map(_.getFiles.asScala).flatMap(_.toList).toList
-    val configObjects = configFiles.filter(_.getName == filename).map(f => IO(ConfigFactory.parseFile(f)))
-    configObjects.foldLeft(IO.pure(ConfigFactory.empty()))((z, c) => for { zz <- z; cc <- c } yield zz.withFallback(cc))
+    val cn = buildConfigName(p.cfgExt.lookupBy.split('.').toList)
+    val validNames = List(s"${cn}\\.${validConfigExtensions}") ++
+        (if (p.cfgExt.allowCommonConfig) List(s"${p.cfgExt.commonConfigName}\\.${validConfigExtensions}") else Nil)
+    validNames.find(regex => f.getName.matches(regex)).isDefined
   }
 
-  private def keyVariations(camelCaseKey: String): List[String] =
-    List(camelCaseKey, camelToKebabCase(camelCaseKey), camelToDotCase(camelCaseKey), camelToSnakeCase(camelCaseKey))
+  private def configFileSort(p: Project)(f1: File, f2: File): Boolean =
+    if (f1.getName.matches(s"${p.cfgExt.commonConfigName}\\.${validConfigExtensions}")) false else true
 }

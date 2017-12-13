@@ -20,6 +20,12 @@ class ConfigPluginExtension(implicit project: Project) {
 
   private[aws] var allowProjectOverrides: Boolean = true
   def allowProjectOverrides(v: Boolean): Unit = allowProjectOverrides = v
+
+  private[aws] var allowCommonConfig: Boolean = true
+  def allowCommonConfig(v: Boolean): Unit = allowCommonConfig = v
+
+  private[aws] var commonConfigName: String = "common"
+  def commonConfigName(v: String): Unit = commonConfigName = v
 }
 
 @typeclass trait HasConfigPluginExtension[A] {
