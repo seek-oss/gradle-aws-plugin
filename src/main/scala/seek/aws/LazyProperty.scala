@@ -2,7 +2,6 @@ package seek.aws
 
 import cats.effect.IO
 import groovy.lang.{Closure, GString}
-import org.codehaus.groovy.runtime.GStringImpl
 import org.gradle.api._
 import seek.aws.HasLazyProperties.lazyProperty
 import seek.aws.config.Lookup
