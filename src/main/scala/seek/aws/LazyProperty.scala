@@ -1,16 +1,19 @@
 package seek.aws
 
 import cats.effect.IO
-import groovy.lang.Closure
+import groovy.lang.{Closure, GString}
+import org.codehaus.groovy.runtime.GStringImpl
 import org.gradle.api._
 import seek.aws.HasLazyProperties.lazyProperty
 import seek.aws.config.Lookup
+
+import scala.reflect.ClassTag
 
 class LazyProperty[A](name: String, default: Option[A] = None)(project: Project) {
 
   private var thing: Option[Any] = None
 
-  def run: IO[A] =
+  def run(implicit tag: ClassTag[A]): IO[A] =
     thing match {
       case Some(v) => render(v)
       case None    =>
@@ -20,7 +23,7 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
         }
     }
 
-  def runOptional: IO[Option[A]] =
+  def runOptional(implicit tag: ClassTag[A]): IO[Option[A]] =
     if (isSet) run.map(Some(_))
     else IO.pure(None)
 
@@ -30,11 +33,12 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
   def isSet: Boolean =
     thing.isDefined
 
-  private def render(v: Any): IO[A] =
+  private def render(v: Any)(implicit tag: ClassTag[A]): IO[A] =
     v match {
-      case l: Lookup     => l.run(project).map(_.asInstanceOf[A])
+      case a: A          => IO(a)
+      case l: Lookup     => l.run(project).flatMap(render)
       case c: Closure[_] => IO(c.call()).flatMap(render)
-      case a             => IO.pure(a.asInstanceOf[A])
+      case g: GString    => render(g.toString)
     }
 }
 
