@@ -5,12 +5,12 @@ import java.io.File
 
 import cats.effect.IO
 import org.gradle.api.Project
-import org.gradle.api.file.FileCollection
 import seek.aws.LazyProperty._
 import seek.aws.config.LookupProject
 import simulacrum.typeclass
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.{Duration, _}
 
 class CloudFormationPluginExtension(implicit project: Project) {
   import HasLazyProperties._
@@ -45,6 +45,10 @@ class CloudFormationPluginExtension(implicit project: Project) {
         } yield zz + (t -> tv)
       }
     }
+
+  private val stackWaitTimeoutSeconds = lazyProperty[Int]("stackWaitTimeoutSeconds", 900)
+  def stackWaitTimeoutSeconds(v: Any): Unit = stackWaitTimeoutSeconds.set(v)
+  private[cloudformation] def stackWaitTimeout: IO[Duration] = stackWaitTimeoutSeconds.run.map(_.seconds)
 }
 
 @typeclass trait HasCloudFormationPluginExtension[A] {

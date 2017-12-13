@@ -16,7 +16,8 @@ class DeleteStack extends AwsTask {
       r  <- region
       c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
       sn <- project.cfnExt.stackName.run
+      to <- project.cfnExt.stackWaitTimeout
       _  <- IO(c.deleteStack(new DeleteStackRequest().withStackName(sn)))
-      _  <- waitForStack(sn).run(c)
+      _  <- waitForStack(sn, to).run(c)
     } yield ()
 }

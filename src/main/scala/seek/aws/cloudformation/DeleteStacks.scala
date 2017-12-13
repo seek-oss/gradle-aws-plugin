@@ -10,6 +10,8 @@ import fs2.Stream
 import seek.aws.cloudformation.instances._
 import seek.aws.cloudformation.syntax._
 
+import scala.concurrent.duration.Duration
+
 class DeleteStacks extends AwsTask {
 
   setDescription("Deletes CloudFormation stacks that match a specified regex")
@@ -30,8 +32,9 @@ class DeleteStacks extends AwsTask {
       n  <- nameMatching.run
       so <- safetyOn.run
       sl <- safetyLimit.run
+      to <- project.cfnExt.stackWaitTimeout
       ds <- deleteStacks(n, so, sl).run(c)
-      _  <- waitForStacks(ds).run(c)
+      _  <- waitForStacks(ds, to).run(c)
     } yield ()
 
   private def deleteStacks(nameMatching: String, safetyOn: Boolean, safetyLimit: Int): Kleisli[IO, AmazonCloudFormation, List[Stack]] =
@@ -47,9 +50,14 @@ class DeleteStacks extends AwsTask {
   private def deleteStack(name: String): Kleisli[IO, AmazonCloudFormation, Unit] =
     Kleisli(c => IO(c.deleteStack(new DeleteStackRequest().withStackName(name))))
 
-  private def waitForStacks(stacks: List[Stack]): Kleisli[IO, AmazonCloudFormation, Unit] =
+  private def waitForStacks(stacks: List[Stack], timeout: Duration): Kleisli[IO, AmazonCloudFormation, Unit] =
     stacks match {
       case Nil    => lift(IO.unit)
-      case h :: t => waitForStack(h.getStackName).flatMap(_ => waitForStacks(t))
+      case h :: t =>
+        for {
+          // TODO: Subtract timeouts from now each time around
+          _ <- waitForStack(h.getStackName, timeout)
+          _ <- waitForStacks(t, timeout)
+        } yield ()
     }
 }

@@ -6,6 +6,8 @@ import cats.data.Kleisli._
 import cats.effect.IO
 import com.amazonaws.services.cloudformation.model._
 import com.amazonaws.services.cloudformation.{AmazonCloudFormation, AmazonCloudFormationClientBuilder}
+import seek.aws.cloudformation.instances._
+import seek.aws.cloudformation.syntax._
 
 import scala.collection.JavaConverters._
 
@@ -16,10 +18,11 @@ class CreateOrUpdateStack extends AwsTask {
   override def run: IO[Unit] =
     for {
       r  <- region
-      c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
+      to <- project.cfnExt.stackWaitTimeout
       sp <- StackProperties(project)
+      c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
       _  <- createOrUpdate(sp).run(c)
-      _  <- waitForStack(sp.name).run(c)
+      _  <- waitForStack(sp.name, to).run(c)
     } yield ()
 
   private def createOrUpdate(s: StackProperties): Kleisli[IO, AmazonCloudFormation, Unit] = {

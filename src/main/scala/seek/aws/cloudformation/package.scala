@@ -9,6 +9,7 @@ import com.amazonaws.services.cloudformation.model.{DescribeStacksRequest, Stack
 import fs2.Stream
 import fs2.Stream._
 import org.gradle.api.{GradleException, Project}
+import org.joda.time.DateTime
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -66,16 +67,20 @@ package object cloudformation {
       pages.flatMap(emits(_))
     }
 
-  def waitForStack(stackName: String, checkEvery: Duration = 3.seconds): Kleisli[IO, AmazonCloudFormation, Unit] =
-    Kleisli { c =>
-      for {
-        _  <- IO(sleep(checkEvery.toMillis))
-        ss <- stackStatus(stackName).run(c)
-        _  <- ss match {
-          case None | Some(CreateComplete | UpdateComplete | DeleteComplete) => IO.unit
-          case Some(_: InProgressStackStatus) => waitForStack(stackName).run(c)
-          case Some(s) => raiseError(s"Stack ${stackName} failed with status ${s.name}")
-        }
-      } yield ()
-    }
+  def waitForStack(stackName: String, timeout: Duration, checkEvery: Duration = 3.seconds):
+      Kleisli[IO, AmazonCloudFormation, Unit] = Kleisli { c =>
+    for {
+      _  <- if (timeout < 0.millis) raiseError(s"Timed out waiting for stack ${stackName}") else IO.unit
+      t1 <- IO(DateTime.now)
+      _  <- IO(sleep(checkEvery.toMillis))
+      ss <- stackStatus(stackName).run(c)
+      t2 <- IO(DateTime.now)
+      to <- IO(timeout - (t2.getMillis - t1.getMillis).millis)
+      _  <- ss match {
+        case None | Some(CreateComplete | UpdateComplete | DeleteComplete) => IO.unit
+        case Some(_: InProgressStackStatus) => waitForStack(stackName, to).run(c)
+        case Some(s) => raiseError(s"Stack ${stackName} failed with status ${s.name}")
+      }
+    } yield ()
+  }
 }
