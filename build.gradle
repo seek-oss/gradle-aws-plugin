@@ -1,3 +1,7 @@
+plugins {
+    id "com.gradle.plugin-publish" version "0.9.9"
+}
+
 apply plugin: 'scala'
 apply plugin: 'maven'
 
@@ -67,4 +71,23 @@ compileTestScala.scalaCompileOptions.additionalParameters = scalaCompileOptions
 task wrapper(type: Wrapper) {
     gradleVersion = '4.3.1'
     distributionType = 'all'
+}
+
+pluginBundle {
+    website = 'https://github.com/SEEK-Jobs/gradle-aws-plugin'
+    vcsUrl = 'https://github.com/SEEK-Jobs/gradle-aws-plugin'
+    description = 'AWS Plugin for Gradle'
+
+    plugins {
+        awsPlugin {
+            id = 'seek.aws'
+            displayName = 'AWS Plugin'
+            tags = ['SEEK', 'AWS', 'Scala']
+        }
+        cloudFormationPlugin {
+            id = 'seek.cloudformation'
+            displayName = 'CloudFormation Plugin'
+            tags = ['SEEK', 'AWS', 'Scala', 'CloudFormation']
+        }
+    }
 }
