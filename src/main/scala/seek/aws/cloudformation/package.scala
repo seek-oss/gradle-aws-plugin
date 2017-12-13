@@ -72,10 +72,9 @@ package object cloudformation {
         _  <- IO(sleep(checkEvery.toMillis))
         ss <- stackStatus(stackName).run(c)
         _  <- ss match {
-          case None                         => IO.unit // Assume stack is in the delete-complete state
-          case Some(_: CompleteStackStatus) => IO.unit
-          case Some(s: FailedStackStatus)   => raiseError(s"Stack ${stackName} failed with status ${s.name}")
-          case _                            => waitForStack(stackName).run(c)
+          case None | Some(CreateComplete | UpdateComplete | DeleteComplete) => IO.unit
+          case Some(_: InProgressStackStatus) => waitForStack(stackName).run(c)
+          case Some(s) => raiseError(s"Stack ${stackName} failed with status ${s.name}")
         }
       } yield ()
     }

@@ -47,8 +47,7 @@ object StackProperties {
     } yield StackProperties(sn, tb, pb, ps, ts)
 
   private def resolveStackParameters(
-      project: Project, templateFile: File, parameterOverrides: Map[String, String]): IO[Map[String, String]] = {
-    println(parseTemplateParameters(templateFile).unsafeRunSync())
+      project: Project, templateFile: File, parameterOverrides: Map[String, String]): IO[Map[String, String]] =
     parseTemplateParameters(templateFile).flatMap(_.foldLeft(IO.pure(Map.empty[String, String])) { (z, p) =>
       LookupProject.lookup(project, pascalToCamelCase(p.name), parameterOverrides).attempt.flatMap {
         case Right(v) => z.map(_ + (p.name -> v))
@@ -56,7 +55,6 @@ object StackProperties {
           if (!p.required && th.isInstanceOf[LookupProjectFailed]) z else IO.raiseError(th)
       }
     })
-  }
 
   private def slurp(f: File): IO[String] =
     IO(fromFile(f, UTF_8.name()).mkString)

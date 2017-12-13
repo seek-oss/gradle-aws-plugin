@@ -26,16 +26,11 @@ object LookupProject {
 
   private val cache = mutable.Map.empty[Project, Config]
   private val validConfigExtensions = "(conf|json|properties)"
+  private val reservedGradleProperties = List("project")
 
-  /**
-    *
-    * @param p
-    * @param key Must be camelCase
-    * @param underrides
-    * @return
-    */
   def lookup(p: Project, key: String, underrides: Map[String, String] = Map.empty): IO[String] =
-    if (p.cfgExt.allowProjectOverrides && p.hasProperty(key)) IO.pure(p.property(key).toString)
+    if (p.cfgExt.allowProjectOverrides && !reservedGradleProperties.contains(key) && p.hasProperty(key))
+      IO.pure(p.property(key).toString)
     else underrides.get(key) match {
       case Some(v) => IO.pure(v)
       case None    => lookupCache(p, key)
