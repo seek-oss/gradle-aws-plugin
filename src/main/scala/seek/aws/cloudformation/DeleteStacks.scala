@@ -6,7 +6,8 @@ import cats.data.Kleisli._
 import cats.effect.IO
 import com.amazonaws.services.cloudformation.model.{DeleteStackRequest, Stack}
 import com.amazonaws.services.cloudformation.{AmazonCloudFormation, AmazonCloudFormationClientBuilder}
-import fs2.Stream
+import java.time.Instant.now
+import scala.concurrent.duration._
 import seek.aws.cloudformation.instances._
 import seek.aws.cloudformation.syntax._
 
@@ -55,9 +56,10 @@ class DeleteStacks extends AwsTask {
       case Nil    => lift(IO.unit)
       case h :: t =>
         for {
-          // TODO: Subtract timeouts from now each time around
-          _ <- waitForStack(h.getStackName, timeout)
-          _ <- waitForStacks(t, timeout)
+          t1 <- lift(IO(now.getEpochSecond.seconds))
+          _  <- waitForStack(h.getStackName, timeout)
+          t2 <- lift(IO(now.getEpochSecond.seconds))
+          _  <- waitForStacks(t, timeout - (t2 - t1))
         } yield ()
     }
 }

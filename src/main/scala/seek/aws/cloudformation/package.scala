@@ -1,6 +1,7 @@
 package seek.aws
 
 import java.lang.Thread.sleep
+import java.time.Instant.now
 
 import cats.data.Kleisli
 import cats.effect.IO
@@ -9,7 +10,6 @@ import com.amazonaws.services.cloudformation.model.{DescribeStacksRequest, Stack
 import fs2.Stream
 import fs2.Stream._
 import org.gradle.api.{GradleException, Project}
-import org.joda.time.DateTime
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -70,12 +70,12 @@ package object cloudformation {
   def waitForStack(stackName: String, timeout: Duration, checkEvery: Duration = 3.seconds):
       Kleisli[IO, AmazonCloudFormation, Unit] = Kleisli { c =>
     for {
-      _  <- if (timeout < 0.millis) raiseError(s"Timed out waiting for stack ${stackName}") else IO.unit
-      t1 <- IO(DateTime.now)
+      _  <- if (timeout < 0.seconds) raiseError(s"Timed out waiting for stack ${stackName}") else IO.unit
+      t1 <- IO(now.getEpochSecond.seconds)
       _  <- IO(sleep(checkEvery.toMillis))
       ss <- stackStatus(stackName).run(c)
-      t2 <- IO(DateTime.now)
-      to <- IO(timeout - (t2.getMillis - t1.getMillis).millis)
+      t2 <- IO(now.getEpochSecond.seconds)
+      to <- IO(timeout - (t2 - t1))
       _  <- ss match {
         case None | Some(CreateComplete | UpdateComplete | DeleteComplete) => IO.unit
         case Some(_: InProgressStackStatus) => waitForStack(stackName, to).run(c)
