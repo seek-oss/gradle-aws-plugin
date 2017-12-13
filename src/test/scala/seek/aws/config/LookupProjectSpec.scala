@@ -62,14 +62,14 @@ class LookupProjectSpec extends SeekSpec {
       }
     }
 
-    "when a key is looked up for a Gradle Project" - {
+    "when the same Gradle project is used for multiple configuration lookups" - {
       val tempConfigFile = new File("build/tmp/tests/development.conf")
       tempConfigFile.getParentFile.mkdirs()
       Files.copy(Paths.get("src/test/resources/development.conf"), tempConfigFile.toPath, REPLACE_EXISTING)
       val project = buildGradleProject
       project.getExtensions.lookupExt.files(new TestFileCollection(Set(tempConfigFile)))
 
-      "the configuration set is cached and not re-built on the next lookup" in {
+      "the configuration set is cached and not re-built after the first lookup" in {
         lookup(project, "camelCaseKey").unsafeRunSync() should equal ("camelCaseValue")
         Files.write(tempConfigFile.toPath, "camelCaseKey = newCamelCaseValue".getBytes)
         lookup(project, "camelCaseKey").unsafeRunSync() should equal ("camelCaseValue")
@@ -85,6 +85,15 @@ class LookupProjectSpec extends SeekSpec {
       "configuration files are layered in LIFO order" in {
         lookup(project, "camelCaseKey").unsafeRunSync() should equal ("subprojectSpecificCamelCaseValue")
         lookup(project, "kebab-case-key").unsafeRunSync() should equal ("kebab-case-value")
+      }
+    }
+
+    "when the lookup key cannot be found" - {
+      val project = buildGradleProject
+
+      "the operation fails with a LookupProjectFailed exception" in {
+        val thrown = intercept[LookupProjectFailed](lookup(project, "nonExistentKey").unsafeRunSync())
+        thrown.key should equal ("nonExistentKey")
       }
     }
   }

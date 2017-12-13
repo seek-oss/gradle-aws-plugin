@@ -49,8 +49,6 @@ class UploadFiles extends Upload {
       _  <- uploadAll(b, mx).run(c)
     } yield ()
 
-  // TODO: Prefix needs to be normalised in case it's an empty string
-
   private def maybeFailIfPrefixExists(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
     maybeRun(failIfPrefixExists, exists(bucket, prefix),
       raiseError(s"Prefix ${prefix} already exists in bucket ${bucket}"))
@@ -80,8 +78,9 @@ class UploadFiles extends Upload {
     val buf = new mutable.ArrayBuffer[FileTreeElement]()
     files.getAsFileTree.visit(d => buf += d)
     val elems = buf.filter(e => e.getFile.isFile && e.getFile.exists).toList
+    val p = if (prefix.isEmpty) "" else s"${prefix}/"
     elems.foldLeft(Map.empty[String, File]) { (z, e) =>
-      z + (s"${prefix}/${e.getRelativePath}" -> e.getFile)
+      z + (s"${p}${e.getRelativePath}" -> e.getFile)
     }
   }
 }

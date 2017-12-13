@@ -20,7 +20,7 @@ class LookupProject(key: String) extends Lookup {
     LookupProject.lookup(p, key)
 }
 
-class LookupProjectFailed(key: String) extends Exception(s"Could not find value for configuration key ${key}")
+class LookupProjectFailed(val key: String) extends Exception(s"Could not find value for configuration key ${key}")
 
 object LookupProject {
 
