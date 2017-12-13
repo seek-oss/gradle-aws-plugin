@@ -8,8 +8,8 @@ import scala.collection.mutable
 
 class ConfigPluginExtension(implicit project: Project) {
 
-  private[aws] var lookupBy: String = "environment"
-  def lookupBy(v: String): Unit = lookupBy = v
+  private[aws] var index: String = "environment"
+  def index(v: String): Unit = index = v
 
   private[aws] val files = mutable.ArrayBuffer.empty[FileCollection]
   def addFiles(fs: FileCollection): Unit = files += fs

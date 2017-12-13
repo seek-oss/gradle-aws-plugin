@@ -12,5 +12,6 @@ class CloudFormationPlugin extends Plugin[Project] {
     }
     project.getTasks.create("createOrUpdateStack", classOf[CreateOrUpdateStack])
     project.getTasks.create("deleteStack", classOf[DeleteStack])
+    project.getTasks.create("verifyStack", classOf[VerifyStack])
   }
 }

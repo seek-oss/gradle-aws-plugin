@@ -27,6 +27,13 @@ object LookupProject {
   private val cache = mutable.Map.empty[Project, Config]
   private val validConfigExtensions = "(conf|json|properties)"
 
+  /**
+    *
+    * @param p
+    * @param key Must be camelCase
+    * @param underrides
+    * @return
+    */
   def lookup(p: Project, key: String, underrides: Map[String, String] = Map.empty): IO[String] =
     if (p.cfgExt.allowProjectOverrides && p.hasProperty(key)) IO.pure(p.property(key).toString)
     else underrides.get(key) match {
@@ -84,14 +91,14 @@ object LookupProject {
           p.getProperties.asScala.get(h).map(_.asInstanceOf[String]) match {
             case Some(v: String) if v.nonEmpty => buildConfigName(t, acc + v + ".")
             case _ => throw new GradleException(
-              s"Could not find a project property with name ${h}")
+              s"Project property with name '${h}' is required to build lookup index ${p.cfgExt.index}")
           }
         case _ => acc.stripSuffix(".")
       }
-    val cn = buildConfigName(p.cfgExt.lookupBy.split('.').toList)
+    val cn = buildConfigName(p.cfgExt.index.split('.').toList)
     val validNames = List(s"${cn}\\.${validConfigExtensions}") ++
         (if (p.cfgExt.allowCommonConfig) List(s"${p.cfgExt.commonConfigName}\\.${validConfigExtensions}") else Nil)
-    validNames.find(regex => f.getName.matches(regex)).isDefined
+    validNames.exists(regex => f.getName.matches(regex))
   }
 
   private def configFileSort(p: Project)(f1: File, f2: File): Boolean =

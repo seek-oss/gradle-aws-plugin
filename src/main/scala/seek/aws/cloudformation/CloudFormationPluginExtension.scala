@@ -41,7 +41,7 @@ class CloudFormationPluginExtension(implicit project: Project) {
       lookupTags.foldLeft(IO.pure(ts)) { (z, t) =>
         for {
           zz <- z
-          tv <- LookupProject.lookup(project, t)
+          tv <- LookupProject.lookup(project, pascalToCamelCase(t))
         } yield zz + (t -> tv)
       }
     }

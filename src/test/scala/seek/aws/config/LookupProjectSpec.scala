@@ -26,7 +26,7 @@ class LookupProjectSpec extends SeekSpec {
 
     "when a multi-dimensional environment.region index is used" - {
       val project = buildGradleProject
-      project.getExtensions.lookupExt.lookupBy("environment.region")
+      project.getExtensions.lookupExt.index("environment.region")
 
       "keys are looked up in a file matching the environment and region name" in {
         lookup(project, "camelCaseKey").unsafeRunSync() should equal ("regionSpecificCamelCaseValue")
