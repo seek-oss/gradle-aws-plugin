@@ -6,9 +6,7 @@ import simulacrum.typeclass
 class AwsPluginExtension(implicit project: Project) {
   import HasLazyProperties._
 
-  type LookupIndex = Map[String, String]
-
-  private[aws] val region = lazyProperty[String]("region", "ap-southeast-2")
+  private[aws] val region = lazyProperty[String]("region")
   def region(v: Any): Unit = region.set(v)
 
   private[aws] val profile = lazyProperty[String]("profile", "default")

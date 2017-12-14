@@ -86,11 +86,11 @@ object LookupProject {
           p.getProperties.asScala.get(h).map(_.asInstanceOf[String]) match {
             case Some(v: String) if v.nonEmpty => buildConfigName(t, acc + v + ".")
             case _ => throw new GradleException(
-              s"Project property with name '${h}' is required to build lookup index ${p.cfgExt.index}")
+              s"Project property with name '${h}' is required to build lookup index ${p.cfgExt.naming}")
           }
         case _ => acc.stripSuffix(".")
       }
-    val cn = buildConfigName(p.cfgExt.index.split('.').toList)
+    val cn = buildConfigName(p.cfgExt.naming.split('.').toList)
     val validNames = List(s"${cn}\\.${validConfigExtensions}") ++
         (if (p.cfgExt.allowCommonConfig) List(s"${p.cfgExt.commonConfigName}\\.${validConfigExtensions}") else Nil)
     validNames.exists(regex => f.getName.matches(regex))
