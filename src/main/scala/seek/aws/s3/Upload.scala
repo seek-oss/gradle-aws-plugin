@@ -10,6 +10,7 @@ import seek.aws.LazyProperty._
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
+// TODO: Update to use Config plugin for interpolations
 abstract class Upload extends AwsTask {
 
   private val interps = mutable.Map.empty[String, Map[String, Any]]

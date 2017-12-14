@@ -73,8 +73,39 @@ would use the value of `bucketName` specified on the command line rather than th
 
 The `allowCommonConfig` property specifies whether common configuration files are allowed. An application that is deployed to multiple environments will often still have a core set of configuration parameters that are common to all environments. When this property is true (the default) the plugin will load any configuration files that match `commonConfigName` and attempt to resolve parameters there if they can not be resolved in environment specific files.
 
-#### Using the Config Plugin
-All AWS tasks make use of the Config plugin to resolve values. For example, consider the following task definition:
+#### Using Lookups
+The Config plugin uses "lookups" to resolve configuration keys to values at runtime. Lookups can be specified as arguments to AWS task properties so that the tasks are configured with different values depending on the environment, region, or any other dimension, they are running against.
+
+Lookups are used by statically importing the methods of `seek.aws.config.Lookup`:
+
+```
+import static seek.aws.config.Lookup.*
+```
+
+This class defines three static methods that can be used to create lookups:
+
+|Scala function signature
+|------------------------
+|`def lookup(key: String): Lookup`
+|`def stackOutput(stackName: String, key: String): Lookup`
+|`def parameterStore(key: String): Lookup`
+
+
+Java versions of the method signatures are shown below:
+
+|Java method signature
+|---------------------
+|`public static Lookup lookup(String)`
+|`public static Lookup stackOutput(String stackName, String key)`
+|`public static Lookup parameterStore(String key)`
+
+Each of these methods returns a `Lookup` object which is resolved at runtime. The `lookup` method is the most general. It returns a `Lookup` object that when run will attempt to resolve the specified key first using Gradle properties, then using configuration files, and finally using the AWS parameter store. More details on configuration resolution are discussed in the next section.
+
+The `stackOutput` method returns a `Lookup` that will attempt to resolve itself by querying CloudFormation for the output key of the specified stack.
+
+The `parameterStore` method returns a `Lookup` that will attempt to resolve itself by querying AWS Parameter Store. 
+
+All AWS tasks can make use of the Config plugin to resolve values. For example, consider the following task definition:
 
 ```
 task uploadLambdaJar(type: UploadFile, dependsOn: shadowJar) {
@@ -83,26 +114,7 @@ task uploadLambdaJar(type: UploadFile, dependsOn: shadowJar) {
     file shadowJar.archivePath
 }
 ```
-This task is responsible for uploading a jar file containing Lambda function code. The `bucket` property may differ across environments in which case the `lookup` method can be used to tell the task the property needs to be lazily resolved at runtime using configuration. The `lookup` method can be statically imported in Gradle files so that it can be easily referenced:
-
-```
-import static seek.aws.config.Lookup.lookup
-```
-
-Lazy resolution of configuration parameter values is not confined to static configuration files. We can also use AWS Parameter Store and CloudFormation stack output values using the methods `parameterStore` and `stackOutput` respectively.
-
-For example,
-
-```
-bucket parameterStore('buildBucket')
-```
-would attempt to resolve the value of `buildBucket` by querying the AWS Parameter Store at runtime. And,
-
-```
-bucket stackOutput('my-stack', 'buildBucket')
-```
-
-would attempt to resolve the value of `buildBucket` by querying CloudFormation for the value of the `buildBucket` output of the stack `my-stack`.
+This task is responsible for uploading a jar file containing Lambda function code. The `bucket` property may differ across environments in which case the `lookup` method can be used to tell the task the property needs to be lazily resolved at runtime.
 
 #### Config Resolution
 The Config plugin uses the [Lightbend config library](https://github.com/lightbend/config) (formerly Typesafe config) to parse configuration files. For example, consider the following Gradle file snippet:
