@@ -37,7 +37,7 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
       case l: Lookup     => l.run(project).flatMap(render)
       case c: Closure[_] => IO(c.call()).flatMap(render)
       case g: GString    => render(g.toString)
-      case a: A          => IO(a)
+      case a: A          => IO.pure(a)
     }
 }
 
