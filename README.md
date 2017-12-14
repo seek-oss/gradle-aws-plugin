@@ -36,7 +36,7 @@ All AWS tasks use the [default credentials provider chain](http://docs.aws.amazo
 The properties of `aws` can use `lookup` methods to lazily set values via configuration. Lookups are described in the next section.
 
 ### Config Plugin
-The Config plugin is applied by the top level AWS plugin so it does need to be manually applied to a Gradle project. This plugin provides a means of specifying the location of configuration parameters and then lazily obtaining their values when tasks are run.
+The Config plugin is applied by the top level AWS plugin so it does need to be manually applied to a Gradle project. This plugin provides a means of specifying the location of configuration files and then lazily querying their values when tasks are run. It also provides a means of lazily querying [AWS Parameter Store](http://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-paramstore.html) and [CloudFormation stack outputs](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html).
 
 The Config plugin is configured via a plugin extension named `config`:
 
@@ -63,7 +63,7 @@ The `naming` property does not have to be one dimensional. For example, consider
 
 The `files` property sets the `FileCollection` that contains all configuration files to be used. `addFiles` can be used to additively accumulate files. For example, in a multi-project Gradle build the root project might set top level common configuration files and then subprojects might add their specific configuration files using `addFiles`.
 
-The `allowProjectOverrides` property specifies whether Gradle project properties should be considered before looking up configuration files. This is useful for overriding configuration values on the command line. For example, if `allowProjectOverrides` is true (the default) then:
+The `allowProjectOverrides` property specifies whether Gradle project properties should be considered before looking up configuration files. This is useful for overriding configuration values on the command line. For example, if `allowProjectOverrides` is `true` (the default) then:
 
 ```
 gradle createOrUpdateStack -PbucketName=my-bucket
@@ -73,7 +73,38 @@ would use the value of `bucketName` specified on the command line rather than th
 
 The `allowCommonConfig` property specifies whether common configuration files are allowed. An application that is deployed to multiple environments will often still have a core set of configuration parameters that are common to all environments. When this property is true (the default) the plugin will load any configuration files that match `commonConfigName` and attempt to resolve parameters there if they can not be resolved in environment specific files.
 
-#### Resolution of Configuration Values
+#### Using the Config Plugin
+All AWS tasks make use of the Config plugin to resolve values. For example, consider the following task definition:
+
+```
+task uploadLambdaJar(type: UploadFile, dependsOn: shadowJar) {
+    bucket lookup('buildBucket')
+    key lambdaArtefactKey
+    file shadowJar.archivePath
+}
+```
+This task is responsible for uploading a jar file containing Lambda function code. The `bucket` property may differ across environments in which case the `lookup` method can be used to tell the task the property needs to be lazily resolved at runtime using configuration. The `lookup` method can be statically imported in Gradle files so that it can be easily referenced:
+
+```
+import static seek.aws.config.Lookup.lookup
+```
+
+Lazy resolution of configuration parameter values is not confined to static configuration files. We can also use AWS Parameter Store and CloudFormation stack output values using the methods `parameterStore` and `stackOutput` respectively.
+
+For example,
+
+```
+bucket parameterStore('buildBucket')
+```
+would attempt to resolve the value of `buildBucket` by querying the AWS Parameter Store at runtime. And,
+
+```
+bucket stackOutput('my-stack', 'buildBucket')
+```
+
+would attempt to resolve the value of `buildBucket` by querying CloudFormation for the value of the `buildBucket` output of the stack `my-stack`.
+
+#### Resolution of Configuration Parameters
 The Config plugin uses the [Lightbend config library](https://github.com/lightbend/config) (formerly Typesafe config) to parse configuration files.
 
 
