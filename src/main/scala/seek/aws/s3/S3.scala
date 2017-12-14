@@ -1,4 +1,4 @@
-package seek.aws
+package seek.aws.s3
 
 import java.io.File
 
@@ -7,17 +7,16 @@ import cats.effect.IO
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{DeleteObjectsRequest, ListObjectsV2Request, S3ObjectSummary}
-import fs2._
+import fs2.Stream
 import fs2.Stream._
-
 import scala.collection.JavaConverters._
 
-package object s3 {
+sealed trait S3 {
 
-  val S3PageSize = 1000
+  private val S3PageSize = 1000
 
   def upload(bucket: String, key: String, file: File): Kleisli[IO, AmazonS3, Unit] =
-    Kleisli { client => IO(client.putObject(bucket, key, file)) }
+    Kleisli { c => IO(c.putObject(bucket, key, file)) }
 
   def exists(bucket: String, keyOrPrefix: String): Kleisli[IO, AmazonS3, Boolean] =
     listObjects(bucket, keyOrPrefix).mapF(_.head.runLog.map(_.nonEmpty))
@@ -61,3 +60,5 @@ package object s3 {
       pages.flatMap(emits(_))
     }
 }
+
+object S3 extends S3

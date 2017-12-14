@@ -12,6 +12,7 @@ import org.gradle.api.file.{FileCollection, FileTreeElement}
 import scala.collection.mutable
 
 class UploadFiles extends Upload {
+  import S3._
 
   setDescription("Uploads multiple files to S3")
 

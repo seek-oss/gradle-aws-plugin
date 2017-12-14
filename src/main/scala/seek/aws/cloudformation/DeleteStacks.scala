@@ -14,6 +14,7 @@ import seek.aws.cloudformation.syntax._
 import scala.concurrent.duration.Duration
 
 class DeleteStacks extends AwsTask {
+  import CloudFormation._
 
   setDescription("Deletes CloudFormation stacks that match a specified regex")
 

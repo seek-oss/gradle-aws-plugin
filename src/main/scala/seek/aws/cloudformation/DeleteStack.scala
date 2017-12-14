@@ -8,6 +8,7 @@ import seek.aws.cloudformation.instances._
 import seek.aws.cloudformation.syntax._
 
 class DeleteStack extends AwsTask {
+  import CloudFormation._
 
   setDescription("Deletes a CloudFormation stack")
 

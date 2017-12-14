@@ -8,6 +8,7 @@ import cats.effect.IO
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 
 class UploadFile extends Upload {
+  import S3._
 
   setDescription("Uploads a single file to S3")
 

@@ -12,6 +12,7 @@ import seek.aws.cloudformation.syntax._
 import scala.collection.JavaConverters._
 
 class CreateOrUpdateStack extends AwsTask {
+  import CloudFormation._
 
   setDescription("Creates a CloudFormation stack or updates it if it already exists")
 
