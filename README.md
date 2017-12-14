@@ -35,9 +35,6 @@ All AWS tasks use the [default credentials provider chain](http://docs.aws.amazo
 
 The properties of `aws` can use `lookup` methods to lazily set values via configuration. Lookups are described in the next section.
 
-#### AWS Tasks
-TODO: Talk about task properties being able to use `lookup`, etc, and closures
-
 ### Config Plugin
 The Config plugin is applied by the top level AWS plugin so it does need to be manually applied to a Gradle project. This plugin provides a means of specifying the location of configuration files and then lazily querying their values when tasks are run. It also provides a means of lazily querying [AWS Parameter Store](http://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-paramstore.html) and [CloudFormation stack outputs](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html).
 
@@ -146,5 +143,11 @@ In the case of the above example using the `lookup` method the order of resoluti
 The resolution ends when the key is found or all sources are exhausted.
 
 ### CloudFormation Plugin
+
+## The Tasks
+
+### S3 Tasks
+### CloudFormation Tasks
+###
 
 ## Examples
