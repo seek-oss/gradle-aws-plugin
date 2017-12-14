@@ -14,13 +14,11 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-class LookupProject(key: String) extends Lookup {
+case class LookupProject(key: String) extends Lookup {
 
   def run(p: Project): IO[String] =
     LookupProject.lookup(p, key)
 }
-
-class LookupProjectFailed(val key: String) extends Exception(s"Could not find value for configuration key ${key}")
 
 object LookupProject {
 
@@ -47,7 +45,7 @@ object LookupProject {
   private def lookupConfig(config: Config, keyVariations: List[String]): IO[String] = {
     def go(ks: List[String]): IO[String] =
       ks match {
-        case Nil    => IO.raiseError(new LookupProjectFailed(keyVariations.head))
+        case Nil    => IO.raiseError(new LookupKeyNotFound(keyVariations.head))
         case h :: t => IO(config.getString(h)).attempt.flatMap {
           case Right(v)         => IO.pure(v)
           case Left(_: Missing) => go(t)

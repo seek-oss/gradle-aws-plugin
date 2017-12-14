@@ -92,7 +92,7 @@ class LookupProjectSpec extends SeekSpec {
       val project = buildGradleProject
 
       "the operation fails with a LookupProjectFailed exception" in {
-        val thrown = intercept[LookupProjectFailed](lookup(project, "nonExistentKey").unsafeRunSync())
+        val thrown = intercept[LookupKeyNotFound](lookup(project, "nonExistentKey").unsafeRunSync())
         thrown.key should equal ("nonExistentKey")
       }
     }

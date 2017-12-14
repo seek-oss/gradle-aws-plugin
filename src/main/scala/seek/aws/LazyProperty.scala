@@ -26,7 +26,7 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
     if (isSet) run.map(Some(_))
     else IO.pure(None)
 
-  def set(x: Any) =
+  def set(x: Any): Unit =
     thing = Some(x)
 
   def isSet: Boolean =
@@ -43,22 +43,22 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
 
 object LazyProperty {
 
-  def render(a: Any)(implicit p: Project): IO[String] = {
-    val lp = lazyProperty[String]("")
+  def render[A](a: Any)(implicit p: Project, tag: ClassTag[A]): IO[A] = {
+    val lp = lazyProperty[A]("")
     lp.set(a)
     lp.run
   }
 
-  def renderAll(s: List[Any])(implicit p: Project): IO[List[String]] =
-    s.foldRight(IO.pure(List.empty[String])) { (a, z) =>
+  def renderAll[A](s: List[Any])(implicit p: Project): IO[List[A]] =
+    s.foldRight(IO.pure(List.empty[A])) { (a, z) =>
       for {
         h <- render(a)
         t <- z
       } yield h :: t
     }
 
-  def renderValues[A](m: Map[A, Any])(implicit p: Project): IO[Map[A, String]] =
-    renderAll(m.values.toList).map(rs => m.keys.zip(rs).toMap)
+  def renderValues[K, A](m: Map[K, Any])(implicit p: Project): IO[Map[K, A]] =
+    renderAll[A](m.values.toList).map(rs => m.keys.zip(rs).toMap)
 }
 
 trait HasLazyProperties {

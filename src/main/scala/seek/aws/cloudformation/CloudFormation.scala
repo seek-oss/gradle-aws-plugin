@@ -28,19 +28,6 @@ sealed trait CloudFormation {
       }
     }
 
-  def stackOutput(stackName: String, outputKey: String): Kleisli[IO, AmazonCloudFormation, String] =
-    Kleisli { c =>
-    IO(c.describeStacks(new DescribeStacksRequest().withStackName(stackName))).map { r =>
-      r.getStacks.asScala.headOption match {
-        case None    => throw new GradleException(s"Stack ${stackName} does not exist")
-        case Some(h) => h.getOutputs.asScala.find(_.getOutputKey == outputKey) match {
-          case None    => throw new GradleException(s"Stack ${stackName} does not have output key ${outputKey}")
-          case Some(o) => o.getOutputValue
-        }
-      }
-    }
-  }
-
   def describeStacks: Kleisli[Stream[IO, ?], AmazonCloudFormation, Stack] =
     Kleisli[Stream[IO, ?], AmazonCloudFormation, Stack] { c =>
       case class X(token: Option[String], complete: Boolean)

@@ -9,7 +9,7 @@ import org.gradle.api.Project
 import seek.aws.cloudformation.CloudFormationTemplate.parseTemplateParameters
 import seek.aws.cloudformation.instances._
 import seek.aws.cloudformation.syntax._
-import seek.aws.config.{LookupProject, LookupProjectFailed}
+import seek.aws.config.{LookupKeyNotFound, LookupProject}
 import seek.aws.pascalToCamelCase
 
 import scala.io.Source.fromFile
@@ -52,7 +52,7 @@ object StackProperties {
       LookupProject.lookup(project, pascalToCamelCase(p.name), parameterOverrides).attempt.flatMap {
         case Right(v) => z.map(_ + (p.name -> v))
         case Left(th) =>
-          if (!p.required && th.isInstanceOf[LookupProjectFailed]) z else IO.raiseError(th)
+          if (!p.required && th.isInstanceOf[LookupKeyNotFound]) z else IO.raiseError(th)
       }
     })
 

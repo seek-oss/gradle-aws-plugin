@@ -37,7 +37,7 @@ class CloudFormationPluginExtension(implicit project: Project) {
     renderValues(_parameters)
 
   private[cloudformation] def tags: IO[Map[String, String]] =
-    renderValues(_tags).flatMap { ts =>
+    renderValues[String, String](_tags).flatMap { ts =>
       lookupTags.foldLeft(IO.pure(ts)) { (z, t) =>
         for {
           zz <- z
