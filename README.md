@@ -143,11 +143,35 @@ In the case of the above example using the `lookup` method the order of resoluti
 The resolution ends when the key is found or all sources are exhausted.
 
 ### CloudFormation Plugin
+The CloudFormation plugin should be applied to projects that provision CloudFormation stacks.
+
+The CloudFormation plugin is configured via a plugin extension named `cloudFormation`:
+
+```
+cloudFormation {
+    stackName project.name
+    templateFile file('src/main/cloudformation/application.yaml')
+    policyFile file('src/main/cloudformation/policy.json')
+    tags (['Owner', 'Project', 'Version'])
+}
+```
+
+The methods of the `cloudFormation` extension are described below:
+
+|Method|Argument type   |Description    |Required|Default
+|------|-------- -------|------------------------------------------|--------|-------
+|`stackName`|`String`|
+|`templateFile`|`File`|
+|`policyFile`|`File`|
+|`parameters`|`Map[String, Any]`
+|`tags`|`Map[String, Any]` or `List[String]`|
+|`stackWaitTimeoutSeconds`|
+
 
 ## The Tasks
 
 ### S3 Tasks
 ### CloudFormation Tasks
-###
+
 
 ## Examples
