@@ -115,13 +115,13 @@ import static seek.aws.config.Lookup.lookup
 import seek.aws.s3.UploadFile
 
 ext {
-	environment = 'development'
+    environment = 'development'
 }
 
 config {
-	addFiles fileTree('config1').include('*')
-	addFiles fileTree('config2').include('*')
-	addFiles fileTree('config3').include('*')
+    addFiles fileTree('config1').include('*')
+    addFiles fileTree('config2').include('*')
+    addFiles fileTree('config3').include('*')
 }
 
 task uploadLambdaJar(type: UploadFile, dependsOn: shadowJar) {
