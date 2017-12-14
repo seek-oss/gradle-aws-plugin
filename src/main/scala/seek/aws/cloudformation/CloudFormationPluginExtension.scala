@@ -46,9 +46,10 @@ class CloudFormationPluginExtension(implicit project: Project) {
       }
     }
 
-  private val stackWaitTimeoutSeconds = lazyProperty[Int]("stackWaitTimeoutSeconds", 900)
+  private val stackWaitTimeoutSeconds = lazyProperty[Any]("stackWaitTimeoutSeconds", 900)
   def stackWaitTimeoutSeconds(v: Any): Unit = stackWaitTimeoutSeconds.set(v)
-  private[cloudformation] def stackWaitTimeout: IO[Duration] = stackWaitTimeoutSeconds.run.map(_.seconds)
+  private[cloudformation] def stackWaitTimeout: IO[Duration] =
+    stackWaitTimeoutSeconds.run.map(_.toString.toInt.seconds)
 }
 
 @typeclass trait HasCloudFormationPluginExtension[A] {

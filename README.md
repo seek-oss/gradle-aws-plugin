@@ -104,7 +104,7 @@ bucket stackOutput('my-stack', 'buildBucket')
 
 would attempt to resolve the value of `buildBucket` by querying CloudFormation for the value of the `buildBucket` output of the stack `my-stack`.
 
-#### Resolution of Configuration Parameters
+#### Config Resolution
 The Config plugin uses the [Lightbend config library](https://github.com/lightbend/config) (formerly Typesafe config) to parse configuration files. For example, consider the following Gradle file snippet:
 
 ```
@@ -132,13 +132,13 @@ The resolution of `buildBucket` is lazy meaning that it will take place when `up
 
 In the case of the above example using the `lookup` method the order of resolution is as follows:
 
-1. Look for a project property named `buildBucket`
+1. Look for a project property named `buildBucket` (unless `config.allowProjectOverrides` is set to `false`)
 1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `development.(conf|json|properties)` in directory `config3`
-1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `common.(conf|json|properties)` in directory `config3`
+1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `common.(conf|json|properties)` in directory `config3` (unless `config.allowCommonConfig` is set to `false`)
 1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `development.(conf|json|properties)` in directory `config2`
-1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `common.(conf|json|properties)` in directory `config2`
+1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `common.(conf|json|properties)` in directory `config2` (unless `config.allowCommonConfig` is set to `false`)
 1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `development.(conf|json|properties)` in directory `config1`
-1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `common.(conf|json|properties)` in directory `config1`
+1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `common.(conf|json|properties)` in directory `config1` (unless `config.allowCommonConfig` is set to `false`)
 
 The resolution ends when the key is found or all sources are exhausted.
 
@@ -158,15 +158,52 @@ cloudFormation {
 
 The methods of the `cloudFormation` extension are described below:
 
-|Method|Argument type   |Description    |Required|Default
-|------|-------- -------|------------------------------------------|--------|-------
-|`stackName`|`String`|
-|`templateFile`|`File`|
-|`policyFile`|`File`|
-|`parameters`|`Map[String, Any]`
-|`tags`|`Map[String, Any]` or `List[String]`|
-|`stackWaitTimeoutSeconds`|
+|Method                   |Argument type                       |Description                            |Required|Default
+|-------------------------|------------------------------------|---------------------------------------|--------|-------
+|`stackName`              |`String`                            |Stack name                             |Yes     |-
+|`templateFile`           |`File`                              |Stack template file                    |Yes     |-
+|`policyFile`             |`File`                              |Stack policy file                      |No      |No policy
+|`parameters`             |`Map[String, Any]`                  |Stack parameters map                   |No      |Config driven
+|`tags`                   |`Map[String, Any]` or `List[String]`|Stack tag map or tag name list         |No      |No tags
+|`stackWaitTimeoutSeconds`|`Int`                               |Timeout for stack operations in seconds|No      |15 mins
 
+The `stackName` property specifies the name for the CloudFormation stack. This property can be specified using a `lookup`, a Gradle property, or hard-coded. The plugin creates a task called `createOrUpdateStack` (detailed below). When this task is run it checks for the existence of a stack with this name - if it exists an update operation is performed; if it does not exist a create operation is performed.
+
+The `templateFile` property specifies a `java.io.File` that references the YAML or JSON CloudFormation template for the stack. Similarly, the optional `policyFile` property specifies a stack policy file.
+
+The `parameters` property can be used to specify a map of key-value pairs to be used as stack parameters. The map values can be hard-coded values or lookups. For example:
+
+```
+cloudFormation {
+    ...
+    parameters ([
+        BuildBucket: lookup('buildBucket'),
+        LambdaArtefactKey: "${buildPrefix}/${service}.jar",
+        LambdaBatchSize: lookup('lambdaBatchSize'),
+        TableName: stackOutput('scaffolding', 'TableName'),
+        KinesisStream: parameterStore('eventStream')
+    ])
+    ...
+}
+```
+
+The CloudFormation plugin resolves stack parameters by parsing the `Parameters` section of the template file and then attempts to resolve each parameter in the following order:
+
+1. Project properties (unless `config.allowCommonConfig` is set to `false`)
+1. Parameters map specified in `cloudFormation.parameters`
+1. Configuration files
+
+If all stack parameters are defined in configuration files or project properties then the `parameters` property of `cloudFormation` is unnecessary and not really recommended. It's main use is if you need to feed in parameter values from AWS Parameter Store or from a CloudFormation stack output.
+
+The `tags` property can be specified as a map (in the same fashion as the `parameters` property) or as a list of tag keys. If a list is specified each tag key is looked up using the Config plugin.
+
+The CloudFormation plugin applies the following tasks to the project:
+
+|Task name            |Description
+|---------------------|-----------
+|`createOrUpdateStack`|Creates or updates the stack defined in the `cloudFormation` extension
+|`deleteStack`        |Deletes the stack defined in the `cloudFormation` extension if it exists
+|`verifyStack`        |Verifies that all stack parameters and tags specified in the template file are available and if they are prints them
 
 ## The Tasks
 

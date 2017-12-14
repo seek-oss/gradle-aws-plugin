@@ -34,10 +34,10 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
 
   private def render(v: Any)(implicit tag: ClassTag[A]): IO[A] =
     v match {
-      case a: A          => IO(a)
       case l: Lookup     => l.run(project).flatMap(render)
       case c: Closure[_] => IO(c.call()).flatMap(render)
       case g: GString    => render(g.toString)
+      case a: A          => IO(a)
     }
 }
 
