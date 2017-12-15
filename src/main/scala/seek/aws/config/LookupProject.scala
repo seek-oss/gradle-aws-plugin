@@ -6,11 +6,10 @@ import java.io.File
 import cats.effect.IO
 import com.typesafe.config.ConfigException.Missing
 import com.typesafe.config.{Config, ConfigFactory}
-import org.gradle.api.{GradleException, Project}
+import org.gradle.api.Project
 import seek.aws.config.instances._
 import seek.aws.config.syntax._
 
-import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
@@ -62,34 +61,20 @@ object LookupProject {
     buildConfig(p).map { c => cache.put(p, c); c }
 
   private def buildConfig(p: Project): IO[Config] = {
-    val configObjects = p.cfgExt.files
-      .reverse
-      .map(_.getFiles.asScala)
-      .flatMap(_.toList.filter(configFileFilter(p)).sortWith(configFileSort(p)))
-      .map(f => IO(ConfigFactory.parseFile(f)))
-      .toList
-    configObjects.foldLeft(IO.pure(ConfigFactory.empty())) { (z, c) =>
-      for {
-        zz <- z
-        cc <- c
-      } yield zz.withFallback(cc)
-    }
+    val configFiles = gather(
+      p.cfgExt.files.reverse
+        .map(_.getFiles.asScala)
+        .flatMap(_.toList.map(IO.pure)))
+    for {
+      cn <- p.cfgExt.configName
+      fs <- configFiles.map(_.filter(configFileFilter(p, cn)).sortWith(configFileSort(p)))
+      os <- IO(fs.map(ConfigFactory.parseFile))
+      c  <- IO(os.foldLeft(ConfigFactory.empty())(_ withFallback _))
+    } yield c
   }
 
-  private def configFileFilter(p: Project)(f: File): Boolean = {
-    @tailrec
-    def buildConfigName(parts: List[String], acc: String = ""): String =
-      parts match {
-        case h :: t =>
-          p.getProperties.asScala.get(h).map(_.asInstanceOf[String]) match {
-            case Some(v: String) if v.nonEmpty => buildConfigName(t, acc + v + ".")
-            case _ => throw new GradleException(
-              s"Project property with name '${h}' is required to build lookup index ${p.cfgExt.naming}")
-          }
-        case _ => acc.stripSuffix(".")
-      }
-    val cn = buildConfigName(p.cfgExt.naming.split('.').toList)
-    val validNames = List(s"${cn}\\.${validConfigExtensions}") ++
+  private def configFileFilter(p: Project, configName: String)(f: File): Boolean = {
+    val validNames = List(s"${configName}\\.${validConfigExtensions}") ++
         (if (p.cfgExt.allowCommonConfig) List(s"${p.cfgExt.commonConfigName}\\.${validConfigExtensions}") else Nil)
     validNames.exists(regex => f.getName.matches(regex))
   }

@@ -6,6 +6,7 @@ import cats.effect.IO
 import com.amazonaws.services.simplesystemsmanagement._
 import com.amazonaws.services.simplesystemsmanagement.model.PutParameterRequest
 import groovy.lang.Closure
+import groovy.lang.Closure.DELEGATE_FIRST
 
 import scala.beans.BeanProperty
 import scala.collection.mutable.ArrayBuffer
@@ -16,10 +17,13 @@ class PutParameters extends AwsTask {
 
   private val parameters: ArrayBuffer[IO[Parameter]] = ArrayBuffer.empty
   def parameter(name: Any, closure: Closure[_]): Unit = {
-    val p = new ParameterBean(name)
+    val p = new ParameterBean
+    p.name = name
+    closure.setResolveStrategy(DELEGATE_FIRST)
     closure.setDelegate(p)
     closure.run()
-    parameters += p.render
+    println("" + p)
+    parameters += p.unbeanify
   }
 
   override def run: IO[Unit] =
@@ -47,36 +51,34 @@ class PutParameters extends AwsTask {
       }
     }
 
-  private def gather[A](ios: Seq[IO[A]]): IO[List[A]] =
-    ios.foldRight(IO.pure(List.empty[A]))((p, z) => z.flatMap(zz => p.map(_ :: zz)))
+  private class ParameterBean {
+    import LazyProperty.render
 
-  private class ParameterBean(
-    @BeanProperty var name: Any,
-    @BeanProperty var value: Any,
-    @BeanProperty var description: Any,
-    @BeanProperty var `type`: Any,
-    @BeanProperty var keyId: Any,
-    @BeanProperty var overwrite: Any,
-    @BeanProperty var allowedPattern: Any) {
-    def this(name: Any) = this(name, null, null, null, null, true, null)
-    import LazyProperty.{render => render1}
-    def render: IO[Parameter] =
+    @BeanProperty var name: Any = null
+    @BeanProperty var value: Any = null
+    @BeanProperty var description: Any = null
+    @BeanProperty var `type`: Any = null
+    @BeanProperty var keyId: Any = null
+    @BeanProperty var overwrite: Any = null
+    @BeanProperty var allowedPattern: Any = null
+
+    def unbeanify: IO[Parameter] =
       for {
-        n <- render1[String](name)
-        v <- render1[String](value)
-        d <- render1[String](description)
-        t <- render1[String](`type`)
-        k <- render1[String](keyId)
-        o <- render1[Boolean](overwrite)
-        p <- render1[String](allowedPattern)
-      } yield Parameter(n, v, d, t, k, o, p)
+        n <- render[String](name, "name")
+        v <- render[String](value, "value")
+        t <- render[String](`type`, "type")
+        d <- render[String](description, "description", null)
+        k <- render[String](keyId, "keyId", null)
+        o <- render[Boolean](overwrite, "overwrite", true)
+        p <- render[String](allowedPattern, "allowedPattern", null)
+      } yield Parameter(n, v, t.toString, d, k, o, p)
   }
 
   private case class Parameter(
     name: String,
     value: String,
-    description: String,
     `type`: String,
+    description: String,
     keyId: String,
     overwrite: Boolean,
     allowedPattern: String)

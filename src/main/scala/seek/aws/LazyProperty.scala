@@ -27,7 +27,7 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
     else IO.pure(None)
 
   def set(x: Any): Unit =
-    thing = Some(x)
+    thing = Option(x)
 
   def isSet: Boolean =
     thing.isDefined
@@ -38,21 +38,28 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
       case c: Closure[_] => IO(c.call()).flatMap(render)
       case g: GString    => render(g.toString)
       case a: A          => IO.pure(a)
+      case null          => raiseError(s"Unexpected null value for property ${name}")
     }
 }
 
 object LazyProperty {
 
-  def render[A](a: Any)(implicit p: Project, tag: ClassTag[A]): IO[A] = {
-    val lp = lazyProperty[A]("")
+  def render[A](a: Any, name: String)(implicit p: Project, tag: ClassTag[A]): IO[A] = {
+    val lp = lazyProperty[A](name)
     lp.set(a)
     lp.run
+  }
+
+  def render[A](a: Any, name: String, default: A)(implicit p: Project, tag: ClassTag[A]): IO[A] = {
+    val lp = lazyProperty[A](name)
+    lp.set(a)
+    lp.runOptional.map(_.getOrElse(default))
   }
 
   def renderAll[A](s: List[Any])(implicit p: Project): IO[List[A]] =
     s.foldRight(IO.pure(List.empty[A])) { (a, z) =>
       for {
-        h <- render(a)
+        h <- render(a, "")
         t <- z
       } yield h :: t
     }

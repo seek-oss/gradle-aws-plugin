@@ -99,7 +99,7 @@ Java versions of the method signatures are shown below:
 |`public static Lookup stackOutput(String stackName, String key)`
 |`public static Lookup parameterStore(String key)`
 
-Each of these methods returns a `Lookup` object which is resolved at runtime. The `lookup` method is the most general and the most powerful. It returns a `Lookup` object that when run will attempt to resolve the specified key first using Gradle properties, then using configuration files, and finally using the AWS parameter store. More details on configuration resolution are discussed in the next section.
+Each of these methods returns a `Lookup` object which is resolved at runtime. The `lookup` method is the most general. It returns a `Lookup` object that when run will attempt to resolve the specified key first using Gradle properties, then using configuration files, and finally using the AWS parameter store. More details on configuration resolution are discussed in the next section.
 
 The `stackOutput` method returns a `Lookup` that will attempt to resolve itself by querying CloudFormation for the output key of the specified stack.
 

@@ -35,6 +35,9 @@ package object aws {
       }
     }
 
+  def gather[A](ios: Seq[IO[A]]): IO[List[A]] =
+    ios.foldRight(IO.pure(List.empty[A]))((p, z) => z.flatMap(zz => p.map(_ :: zz)))
+
   def pascalToCamelCase(s: String): String =
     ConfigFieldMapping(PascalCase, CamelCase).apply(s)
 
