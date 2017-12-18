@@ -32,7 +32,7 @@ class UploadFile extends Upload {
       f <- file.run
       k <- key.run
       _ <- maybeFailIfObjectExists(b, k).run(c)
-      g <- maybeInterp(f)
+      g <- maybeInterpolate(f)
       _ <- upload(b, k, g).run(c)
     } yield ()
 

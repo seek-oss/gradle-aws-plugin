@@ -41,7 +41,7 @@ class UploadFiles extends Upload {
       fs <- files.run
       p  <- prefix.run.map(_.stripSuffix("/"))
       m  <- IO.pure(keyFileMap(fs, p))
-      is <- maybeInterp(m.values.toList)
+      is <- maybeInterpolate(m.values.toList)
       mx <- IO.pure(m.keys.zip(is).toMap)
       c  <- IO.pure(AmazonS3ClientBuilder.standard().withRegion(r).build())
       _  <- maybeFailIfPrefixExists(b, p).run(c)
@@ -75,12 +75,9 @@ class UploadFiles extends Upload {
       case (z, (k, f)) => z.flatMap(_ => upload(bucket, k, f))
     }
 
-  private def keyFileMap(files: FileCollection, prefix: String) = {
-    val buf = new mutable.ArrayBuffer[FileTreeElement]()
-    files.getAsFileTree.visit(d => buf += d)
-    val elems = buf.filter(e => e.getFile.isFile && e.getFile.exists).toList
+  private def keyFileMap(files: FileCollection, prefix: String): Map[String, File] = {
     val p = if (prefix.isEmpty) "" else s"${prefix}/"
-    elems.foldLeft(Map.empty[String, File]) { (z, e) =>
+    fileTreeElements(files).foldLeft(Map.empty[String, File]) { (z, e) =>
       z + (s"${p}${e.getRelativePath}" -> e.getFile)
     }
   }

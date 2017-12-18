@@ -17,13 +17,10 @@ class PutParameters extends AwsTask {
 
   private val parameters: ArrayBuffer[IO[Parameter]] = ArrayBuffer.empty
   def parameter(name: Any, closure: Closure[_]): Unit = {
-    val p = new ParameterBean
-    p.name = name
+    val bean = new ParameterBean(name)
     closure.setResolveStrategy(DELEGATE_FIRST)
-    closure.setDelegate(p)
-    closure.run()
-    println("" + p)
-    parameters += p.unbeanify
+    closure.setDelegate(bean)
+    parameters += IO(closure.run()).flatMap(_ => bean.unbeanify)
   }
 
   override def run: IO[Unit] =
@@ -51,16 +48,15 @@ class PutParameters extends AwsTask {
       }
     }
 
-  private class ParameterBean {
+  private class ParameterBean(val name: Any) {
     import LazyProperty.render
 
-    @BeanProperty var name: Any = null
-    @BeanProperty var value: Any = null
-    @BeanProperty var description: Any = null
-    @BeanProperty var `type`: Any = null
-    @BeanProperty var keyId: Any = null
-    @BeanProperty var overwrite: Any = null
-    @BeanProperty var allowedPattern: Any = null
+    @BeanProperty var value: Any = _
+    @BeanProperty var description: Any = _
+    @BeanProperty var `type`: Any = _
+    @BeanProperty var keyId: Any = _
+    @BeanProperty var overwrite: Any = _
+    @BeanProperty var allowedPattern: Any = _
 
     def unbeanify: IO[Parameter] =
       for {

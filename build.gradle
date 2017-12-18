@@ -5,8 +5,9 @@ plugins {
 apply plugin: 'scala'
 apply plugin: 'maven'
 
-group = 'seek.eng'
-version = "0.0.${buildNumber}"
+group = 'seek'
+ext.baseVersion = file('version.txt').text.trim()
+version = "${baseVersion}-SNAPSHOT"
 
 repositories {
     mavenLocal()
@@ -82,11 +83,13 @@ pluginBundle {
         awsPlugin {
             id = 'seek.aws'
             displayName = 'AWS Plugin'
+            version = baseVersion
             tags = ['SEEK', 'AWS', 'Scala']
         }
         cloudFormationPlugin {
             id = 'seek.cloudformation'
             displayName = 'CloudFormation Plugin'
+            version = baseVersion
             tags = ['SEEK', 'AWS', 'Scala', 'CloudFormation']
         }
     }
