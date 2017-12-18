@@ -14,7 +14,7 @@ import seek.aws.pascalToCamelCase
 
 import scala.io.Source.fromFile
 
-case class StackProperties(
+case class StackDescription(
     name: String,
     templateBody: String,
     policyBody: Option[String],
@@ -32,9 +32,9 @@ case class StackProperties(
     }
 }
 
-object StackProperties {
+object StackDescription {
 
-  def apply(project: Project): IO[StackProperties] =
+  def apply(project: Project): IO[StackDescription] =
     for {
       sn <- project.cfnExt.stackName.run
       tf <- project.cfnExt.templateFile.run
@@ -44,7 +44,7 @@ object StackProperties {
       tb <- slurp(tf)
       pb <- maybeSlurp(pf)
       ps <- resolveStackParameters(project, tf, ps)
-    } yield StackProperties(sn, tb, pb, ps, ts)
+    } yield StackDescription(sn, tb, pb, ps, ts)
 
   private def resolveStackParameters(
       project: Project, templateFile: File, parameterOverrides: Map[String, String]): IO[Map[String, String]] =

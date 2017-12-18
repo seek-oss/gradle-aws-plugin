@@ -9,17 +9,17 @@ class VerifyStack extends AwsTask {
 
   override def run: IO[Unit] =
     for {
-      sp <- StackProperties(project)
+      sp <- StackDescription(project)
       _  <- printStack(sp)
     } yield ()
 
-  private def printStack(sp: StackProperties): IO[Unit] =
+  private def printStack(sd: StackDescription): IO[Unit] =
     for {
-      _ <- IO(logger.lifecycle(s"Name: ${sp.name}"))
+      _ <- IO(logger.lifecycle(s"Name: ${sd.name}"))
       _ <- IO(logger.lifecycle("Parameters:"))
-      _ <- printSortedMap(sp.parameters)
+      _ <- printSortedMap(sd.parameters)
       _ <- IO(logger.lifecycle("Tags:"))
-      _ <- printSortedMap(sp.tags)
+      _ <- printSortedMap(sd.tags)
     } yield ()
 
   private def printSortedMap(m: Map[String, String]): IO[Unit] =

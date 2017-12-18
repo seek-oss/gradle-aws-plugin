@@ -20,44 +20,44 @@ class CreateOrUpdateStack extends AwsTask {
     for {
       r  <- region
       to <- project.cfnExt.stackWaitTimeout
-      sp <- StackProperties(project)
+      sp <- StackDescription(project)
       c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
       _  <- createOrUpdate(sp).run(c)
       _  <- waitForStack(sp.name, to).run(c)
     } yield ()
 
-  private def createOrUpdate(s: StackProperties): Kleisli[IO, AmazonCloudFormation, Unit] = {
-    def inProgressError(ss: StackStatus) = raiseError(s"Can not update stack ${s.name} as it has status ${ss.name}")
-    stackStatus(s.name).flatMap {
-      case None | Some(DeleteComplete)     => create(s)
+  private def createOrUpdate(sd: StackDescription): Kleisli[IO, AmazonCloudFormation, Unit] = {
+    def inProgressError(ss: StackStatus) = raiseError(s"Can not update stack ${sd.name} as it has status ${ss.name}")
+    stackStatus(sd.name).flatMap {
+      case None | Some(DeleteComplete)     => create(sd)
       case Some(ss: InProgressStackStatus) => lift(inProgressError(ss))
-      case Some(_)                         => update(s)
+      case Some(_)                         => update(sd)
     }
   }
 
-  private def create(s: StackProperties): Kleisli[IO, AmazonCloudFormation, Unit] =
+  private def create(sd: StackDescription): Kleisli[IO, AmazonCloudFormation, Unit] =
     Kleisli { c =>
       val req = new CreateStackRequest()
-        .withStackName(s.name)
-        .withTemplateBody(s.templateBody)
-        .withParameters(s.cfnParams.asJava)
-        .withTags(s.cfnTags.asJava)
+        .withStackName(sd.name)
+        .withTemplateBody(sd.templateBody)
+        .withParameters(sd.cfnParams.asJava)
+        .withTags(sd.cfnTags.asJava)
         .withCapabilities("CAPABILITY_IAM")
         .withCapabilities("CAPABILITY_NAMED_IAM")
-      if (s.policyBody.isDefined) req.setStackPolicyBody(s.policyBody.get)
+      if (sd.policyBody.isDefined) req.setStackPolicyBody(sd.policyBody.get)
       IO(c.createStack(req))
     }
 
-  private def update(s: StackProperties): Kleisli[IO, AmazonCloudFormation, Unit] =
+  private def update(sd: StackDescription): Kleisli[IO, AmazonCloudFormation, Unit] =
     Kleisli { c =>
       val req = new UpdateStackRequest()
-        .withStackName(s.name)
-        .withTemplateBody(s.templateBody)
-        .withParameters(s.cfnParams.asJava)
-        .withTags(s.cfnTags.asJava)
+        .withStackName(sd.name)
+        .withTemplateBody(sd.templateBody)
+        .withParameters(sd.cfnParams.asJava)
+        .withTags(sd.cfnTags.asJava)
         .withCapabilities("CAPABILITY_IAM")
         .withCapabilities("CAPABILITY_NAMED_IAM")
-      if (s.policyBody.isDefined) req.setStackPolicyBody(s.policyBody.get)
+      if (sd.policyBody.isDefined) req.setStackPolicyBody(sd.policyBody.get)
       IO(c.updateStack(req)).attempt.map {
         case Right(_) => ()
         case Left(e: AmazonCloudFormationException) if e.getMessage.startsWith("No updates are to be performed") => ()
