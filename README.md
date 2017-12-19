@@ -5,7 +5,7 @@ This plugin provides a means of orchestrating the provisioning of AWS infrastruc
 
 Apply the AWS and CloudFormation plugins to your Gradle project:
 
-```
+```gradle
 plugins {
     id 'seek.aws' version 'A.B.C'
     id 'seek.cloudformation' version 'A.B.C'
@@ -22,7 +22,7 @@ The AWS plugin must be applied to any Gradle project that wishes to use AWS-rela
 
 The AWS plugin is configured via a plugin extension named `aws`:
 
-```
+```gradle
 aws {
     region 'us-west-1'
     profile 'my-profile'
@@ -49,7 +49,7 @@ The Config plugin uses the [Lightbend config library](https://github.com/lightbe
 
 The Config plugin is configured via a plugin extension named `config`:
 
-```
+```gradle
 config {
     files fileTree('config').include('*.conf')
 }
@@ -128,7 +128,7 @@ When the Config plugin attempts to resolve a lookup it will considers a number o
 
 Consider the following Gradle file snippet:
 
-```groovy
+```gradle
 import static seek.aws.config.Lookup.lookup
 import seek.aws.s3.UploadFile
 
@@ -168,7 +168,7 @@ The CloudFormation plugin should be applied to projects that provision CloudForm
 
 The CloudFormation plugin is configured via a plugin extension named `cloudFormation`:
 
-```
+```gradle
 cloudFormation {
     stackName project.name
     templateFile file('src/main/cloudformation/application.yaml')
@@ -194,7 +194,7 @@ The `templateFile` property specifies a `java.io.File` that references the YAML 
 
 The `parameters` property can be used to specify a map of key-value pairs to be used as stack parameters. The map values can be hard-coded values or lookups. For example:
 
-```
+```gradle
 cloudFormation {
     ...
     parameters ([
