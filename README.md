@@ -102,7 +102,7 @@ The `lookup` method returns a `Lookup` object which is executed at task runtime.
 
 All AWS tasks can make use of lookups. For example, consider the following task definition:
 
-```
+```gradle
 task uploadLambdaJar(type: UploadFile, dependsOn: shadowJar) {
     bucket lookup('buildBucket')
     key lambdaArtefactKey
@@ -128,7 +128,7 @@ When the Config plugin attempts to resolve a lookup it will considers a number o
 
 Consider the following Gradle file snippet:
 
-```scala
+```groovy
 import static seek.aws.config.Lookup.lookup
 import seek.aws.s3.UploadFile
 
