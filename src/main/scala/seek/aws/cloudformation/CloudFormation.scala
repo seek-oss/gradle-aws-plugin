@@ -10,7 +10,6 @@ import com.amazonaws.services.cloudformation.AmazonCloudFormation
 import com.amazonaws.services.cloudformation.model.{DescribeStacksRequest, Stack}
 import fs2.Stream
 import fs2.Stream.{emits, unfoldEval}
-import org.gradle.api.GradleException
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.{Duration, _}

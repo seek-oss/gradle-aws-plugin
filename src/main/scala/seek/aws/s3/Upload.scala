@@ -19,16 +19,30 @@ import scala.util.matching.Regex
 
 abstract class Upload extends AwsTask {
 
+  private type ShouldInterpolate = File => Boolean
   private val interpolations: ArrayBuffer[IO[Interpolation]] = ArrayBuffer.empty
+  private val noOp = new Closure[Any](null) { override def run() = () }
+
+  def interpolate(fs: FileCollection): Unit =
+    interpolate(fs, noOp)
 
   def interpolate(fs: FileCollection, closure: Closure[_]): Unit =
-    addInterpolation(fileTreeElements(fs).map(_.getFile), closure)
+    addInterpolation(fileTreeElements(fs).map(_.getFile).contains(_), closure)
+
+  def interpolate(f: File): Unit =
+    interpolate(f, noOp)
 
   def interpolate(f: File, closure: Closure[_]): Unit =
-    addInterpolation(List(f), closure)
+    addInterpolation(_ == f, closure)
 
-  private def addInterpolation(fs: List[File], closure: Closure[_]): Unit = {
-    val bean = new InterpolationBean(fs)
+  def interpolate(b: Boolean, closure: Closure[_]): Unit =
+    addInterpolation(_ => b, closure)
+
+  def interpolate(b: Boolean): Unit =
+    addInterpolation(_ => b, noOp)
+
+  private def addInterpolation(should: ShouldInterpolate, closure: Closure[_]): Unit = {
+    val bean = new InterpolationBean(should)
     closure.setResolveStrategy(DELEGATE_FIRST)
     closure.setDelegate(bean)
     interpolations += IO(closure.run()).flatMap(_ => bean.unbeanify)
@@ -40,7 +54,7 @@ abstract class Upload extends AwsTask {
   protected def maybeInterpolate(fs: List[File]): IO[List[File]] =
     gather(interpolations).flatMap { is =>
       fs.foldRight(IO.pure(List.empty[File])) { (f, z) =>
-        is.find(_.files.contains(f)) match {
+        is.find(_.should(f)) match {
           case None    => z.map(f :: _)
           case Some(i) => for { zz <- z; ff <- runInterpolation(f, i) } yield ff :: zz
         }
@@ -50,15 +64,17 @@ abstract class Upload extends AwsTask {
   private def runInterpolation(f: File, i: Interpolation): IO[File] = {
     val rel = project.getProjectDir.toPath.relativize(f.toPath)
     val out = new File(s"${project.getBuildDir}/interpolated/${rel}")
-    io.file.readAll[IO](f.toPath, 4096)
+    val prg = io.file.readAll[IO](f.toPath, 4096)
       .through(text.utf8Decode)
       .through(text.lines)
       .evalMap(searchAndReplace(i))
       .intersperse(System.lineSeparator)
       .through(text.utf8Encode)
       .through(io.file.writeAll(out.toPath))
-      .run
-      .map(_ => out)
+    for {
+      _ <- IO(out.getParentFile.mkdirs())
+      _ <- prg.run
+    } yield out
   }
 
   private def searchAndReplace(i: Interpolation)(line: String): IO[String] = {
@@ -75,7 +91,7 @@ abstract class Upload extends AwsTask {
     }
   }
 
-  private class InterpolationBean(val files: List[File]) {
+  private class InterpolationBean(val should: ShouldInterpolate) {
     import LazyProperty.render
 
     @BeanProperty var startToken: Any = "{{{"
@@ -87,10 +103,10 @@ abstract class Upload extends AwsTask {
         st <- render[String](startToken, "startToken")
         et <- render[String](endToken, "endToken")
         m  <- renderValues[String, String](replace.asScala.toMap)
-      } yield Interpolation(files, st, et, m)
+      } yield Interpolation(should, st, et, m)
   }
 
-  private case class Interpolation(files: List[File], startToken: String, endToken: String, replace: Map[String, String]) {
+  private case class Interpolation(should: ShouldInterpolate, startToken: String, endToken: String, replace: Map[String, String]) {
     def pattern: Regex =
       s"${quote(startToken)}[a-zA-Z0-9\\-_\\.\\/]+${quote(endToken)}".r
   }

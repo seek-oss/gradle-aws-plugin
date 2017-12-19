@@ -1,7 +1,5 @@
 package seek
 
-import java.io.File
-
 import cats.data.Kleisli
 import cats.effect.IO
 import org.gradle.api.file.{FileCollection, FileTreeElement}
