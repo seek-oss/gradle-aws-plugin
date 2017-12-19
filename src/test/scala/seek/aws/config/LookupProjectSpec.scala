@@ -42,7 +42,7 @@ class LookupProjectSpec extends SeekSpec {
       }
 
       "but its value is not used if allowProjectOverrides is disabled" in {
-        project.getExtensions.lookupExt.allowProjectOverrides = false
+        project.getExtensions.lookupExt.allowPropertyOverrides = false
         lookup(project, "camelCaseKey").unsafeRunSync() should equal ("camelCaseValue")
       }
 

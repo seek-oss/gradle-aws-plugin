@@ -23,8 +23,8 @@ class ConfigPluginExtension(implicit project: Project) {
     addFiles(fs)
   }
 
-  private[aws] var allowProjectOverrides: Boolean = true
-  def allowProjectOverrides(v: Boolean): Unit = allowProjectOverrides = v
+  private[aws] var allowPropertyOverrides: Boolean = true
+  def allowPropertyOverrides(v: Boolean): Unit = allowPropertyOverrides = v
 
   private[aws] var allowCommonConfig: Boolean = true
   def allowCommonConfig(v: Boolean): Unit = allowCommonConfig = v
