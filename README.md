@@ -151,17 +151,19 @@ task uploadLambdaJar(type: UploadFile, dependsOn: shadowJar) {
 
 The resolution of `buildBucket` is lazy meaning that it will take place when `uploadLambdaJar` runs not during Gradle's [initialisation phase](https://docs.gradle.org/current/userguide/build_lifecycle.html).
 
-In the case of the above example using the `lookup` method the order of resolution is as follows:
+In the case of the above example, at runtime the Config plugin will look for:
 
-1. Look for a project property named `buildBucket` (unless `config.allowPropertyOverrides` is set to `false`)
-1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `development.(conf|json|properties)` in directory `config3`
-1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `common.(conf|json|properties)` in directory `config3` (unless `config.allowCommonConfig` is set to `false`)
-1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `development.(conf|json|properties)` in directory `config2`
-1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `common.(conf|json|properties)` in directory `config2` (unless `config.allowCommonConfig` is set to `false`)
-1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `development.(conf|json|properties)` in directory `config1`
-1. Look for a configuration key named `buildBucket`, `build-bucket`, `build.bucket`, or `build_bucket` in a file named `common.(conf|json|properties)` in directory `config1` (unless `config.allowCommonConfig` is set to `false`)
+1. A project property named `buildBucket`
+1. A `buildBucket` configuration key in `development.(conf|json|properties)` in directory `config2`
+1. A `buildBucket` configuration key in `common.(conf|json|properties)` in directory `config2`
+1. A `buildBucket` configuration key in `development.(conf|json|properties)` in directory `config1`
+1. A `buildBucket` configuration key in `common.(conf|json|properties)` in directory `config1`
+1. A `buildBucket` parameter key in the AWS Parameter Store
 
 The resolution ends when the key is found or all sources are exhausted.
+
+**Note:** In steps 2-5 when the Config plugin attempts to resolve `buildBucket` via configuration files the Plugin will attempt to look for the following variations of the key name in order of: `buildBucket`, `build-bucket`, `build.bucket`, `build_bucket`.
+
 
 ### CloudFormation Plugin
 The CloudFormation plugin should be applied to projects that provision CloudFormation stacks.
@@ -188,11 +190,11 @@ The methods of the `cloudFormation` extension are described below:
 |`tags`                   |`Map[String, Any]` or `List[String]`|Stack tag map or tag name list         |No      |No tags
 |`stackWaitTimeoutSeconds`|`Int`                               |Timeout for stack operations in seconds|No      |15 mins
 
-The `stackName` property specifies the name for the CloudFormation stack. This property can be specified using a `lookup`, a Gradle property, or hard-coded. The plugin creates a task called `createOrUpdateStack` (detailed below). When this task is run it checks for the existence of a stack with this name - if it exists an update operation is performed; if it does not exist a create operation is performed.
+The **`stackName`** method specifies the name for the CloudFormation stack. The name can be specified using a `lookup`, a Gradle property, or hardcoded. The CloudFormation plugin creates a task named `createOrUpdateStack` (described below) that when run checks for the existence of a stack with this name - if it exists an update operation is performed; if it does not exist a create operation is performed.
 
-The `templateFile` property specifies a `java.io.File` that references the YAML or JSON CloudFormation template for the stack. Similarly, the optional `policyFile` property specifies a stack policy file.
+The **`templateFile`** method specifies a `java.io.File` that references the YAML or JSON CloudFormation template for the stack. Similarly, the optional **`policyFile`** method specifies a stack policy file.
 
-The `parameters` property can be used to specify a map of key-value pairs to be used as stack parameters. The map values can be hard-coded values or lookups. For example:
+The **`parameters`** property can be used to specify a map of key-value pairs to be used as stack parameters. The map values can be hard-coded values or lookups. For example:
 
 ```gradle
 cloudFormation {
@@ -208,13 +210,16 @@ cloudFormation {
 }
 ```
 
-The CloudFormation plugin resolves stack parameters by parsing the `Parameters` section of the template file and then attempts to resolve each parameter in the following order:
+The CloudFormation plugin resolves stack parameters by parsing the `Parameters` section of the template file and then using the Config plugin to resolve each parameter. The CloudFormation plugin expects the CloudFormation parameters in the template file to be specified in `PascalCase`. It then uses the Config plugin to resolve the `camelCase` version of each parameter. As described previously the Config plugin is quite lenient when looking up keys in configuration files and will try multiple case variations.
 
-1. Project properties (unless `config.allowCommonConfig` is set to `false`)
-1. Parameters map specified in `cloudFormation.parameters`
+CloudFormation template parameters are resolved in the following order:
+
+1. Project properties (unless `config.allowPropertyOverrides` is set to `false`)
+1. Optional map specified to `cloudFormation.parameters`
 1. Configuration files
+1. AWS Parameter Store 
 
-If all stack parameters are defined in configuration files or project properties then the `parameters` property of `cloudFormation` is unnecessary and not really recommended. It's main use is if you need to feed in parameter values from AWS Parameter Store or from a CloudFormation stack output.
+If all stack parameters are defined in any combination of Gradle project properties, configuration files, and AWS Parameter Store then the `parameters` property of `cloudFormation` is not necessary.
 
 The `tags` property can be specified as a map (in the same fashion as the `parameters` property) or as a list of tag keys. If a list is specified each tag key is looked up using the Config plugin.
 
