@@ -1,6 +1,30 @@
 # AWS Plugin for Gradle
 This plugin provides a means of orchestrating the provisioning of AWS infrastructure and managing configuration parameters across environments.
 
+## Table of Contents
+
+  * [Quick Start](#quick-start)
+  * [The Plugins](#the-plugins)
+     * [AWS Plugin](#aws-plugin)
+     * [Config Plugin](#config-plugin)
+        * [Using Lookups](#using-lookups)
+           * [Other Types of Lookups](#other-types-of-lookups)
+        * [Config Resolution](#config-resolution)
+     * [CloudFormation Plugin](#cloudformation-plugin)
+  * [The Tasks](#the-tasks)
+     * [S3 Tasks](#s3-tasks)
+        * [UploadFile](#uploadfile)
+        * [UploadFiles](#uploadfiles)
+        * [Interpolation](#interpolation)
+     * [CloudFormation Tasks](#cloudformation-tasks)
+        * [CreateOrUpdateStack](#createorupdatestack)
+        * [VerifyStack](#verifystack)
+        * [DeleteStack](#deletestack)
+        * [DeleteStacks](#deletestacks)
+     * [Simple Systems Manager Tasks](#simple-systems-manager-tasks)
+        * [PutParameters](#putparameters)
+  * [Full Example](#full-example)
+
 ## Quick Start
 
 Apply the AWS and CloudFormation plugins to your Gradle project:
