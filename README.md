@@ -233,8 +233,99 @@ The CloudFormation plugin applies the following tasks to the project:
 
 ## The Tasks
 
+This section provides an overview of the AWS tasks available.
+
 ### S3 Tasks
+
+#### `UploadFile`
+
+The `seek.aws.s3.UploadFile` task uploads a single file, with optional interpolation, to an S3 bucket with a specified key.
+
+**Example:**
+
+```gradle
+task upload(type: UploadFile) {
+    file file('build.gradle')
+    bucket lookup('bucketName')
+    key 'uploads/build.gradle'
+}
+```
+
+|Method              |Argument type|Description                                  |Required|Default
+|--------------------|-------------|---------------------------------------------|--------|-------
+|`file`              |`File`       |File to upload                               |Yes     |-
+|`bucket`            |`String`     |S3 bucket name                               |Yes     |-
+|`key`               |`String`     |S3 key                                       |Yes     |-
+|`failIfObjectExists`|`Boolean`    |Whether to fail fast if object already exists|No      |`false`
+|`interpolate`       |Various      |Interpolation rules described below          |No      |-
+
+#### `UploadFiles`
+
+The `seek.aws.s3.UploadFile` task uploads a single file, with optional interpolation, to an S3 bucket with a specified key.
+
+**Example:**
+
+```gradle
+task upload(type: UploadFiles) {
+    files fileTree('config').include('*')
+    bucket lookup('bucketName')
+    prefix 'configs'
+}
+```
+
+|Method                   |Argument type   |Description                                              |Required|Default
+|-------------------------|----------------|---------------------------------------------------------|--------|-------
+|`files`                  |`FileCollection`|Files to upload                                          |Yes     |-
+|`bucket`                 |`String`        |S3 bucket name                                           |Yes     |-
+|`prefix`                 |`String`        |S3 prefix                                                |Yes     |-
+|`failIfObjectExists`     |`Boolean`       |Whether to fail fast if an object already exists         |No      |`false`
+|`failIfPrefixExists`     |`Boolean`       |Whether to fail fast if the prefix already exists        |No      |`false`
+|`cleanPrefixBeforeUpload`|`Boolean`       |Whether to delete all files in the prefix prior to upload|No      |`false`
+|`interpolate`            |Various         |Interpolation rules described below                      |No      |-
+
+#### Interpolation
+
+Both the `UploadFile` and `UploadFiles` support interpolation of files prior to upload. Interpolation leverages the Config plugin to resolve tokenised keys to values.
+
+Shown below is an `UploadFiles` task that interpolates all files using the Config plugin to resolve configuration keys.
+
+```gradle
+task upload(type: UploadFiles) {
+    files fileTree('out').include('*')
+    bucket lookup('bucketName')
+    prefix 'files'
+    interpolate true
+}
+```
+
+By default interpolation uses the start token `{{{` and the end token `}}}`. So in the example above, if a file contained the line:
+
+```
+The {{{animal}}} jumps over the {{{otherAnimal}}}
+```
+
+the keys `animal` and `otherAnimal` would be resolved using the Config plugin and would be substituted into a copy of the file (stored in the `build` directory) prior to upload.
+
+Below is an example of a call to `interpolate` which overrides the default start and end tokens:
+
+```gradle
+interpolate(true) {
+    startToken = '${'
+    endToken = '}'
+}
+```
+
+Below is an example of a call to `interpolate` which only interpolates a single file (within the set being uploaded) and provides a map of interpolation key-values. Any interpolation keys not found within this map will fall back to values resolved by the Config plugin.
+
+```gradle
+interpolate(file('out/story.sh')) {
+    replace = [animal: 'quick brown fox', otherAnimal: 'lazy dog']
+}
+```
+
+To see all the `interpolate` overrides see the source [here](src/main/scala/seek/aws/s3/Upload.scala).
+
+
 ### CloudFormation Tasks
 
-
-## Examples
+## Full Example

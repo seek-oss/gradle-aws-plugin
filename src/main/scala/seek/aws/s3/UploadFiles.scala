@@ -16,11 +16,11 @@ class UploadFiles extends Upload {
 
   setDescription("Uploads multiple files to S3")
 
-  private val bucket = lazyProperty[String]("bucket")
-  def bucket(v: Any): Unit = bucket.set(v)
-
   private val files = lazyProperty[FileCollection]("files")
   def files(v: Any): Unit = files.set(v)
+
+  private val bucket = lazyProperty[String]("bucket")
+  def bucket(v: Any): Unit = bucket.set(v)
 
   private val prefix = lazyProperty[String]("prefix", "")
   def prefix(v: Any): Unit = prefix.set(v)
@@ -37,8 +37,8 @@ class UploadFiles extends Upload {
   override def run: IO[Unit] =
     for {
       r  <- region
-      b  <- bucket.run
       fs <- files.run
+      b  <- bucket.run
       p  <- prefix.run.map(_.stripSuffix("/"))
       m  <- IO.pure(keyFileMap(fs, p))
       is <- maybeInterpolate(m.values.toList)

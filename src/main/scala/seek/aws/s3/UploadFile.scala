@@ -12,11 +12,11 @@ class UploadFile extends Upload {
 
   setDescription("Uploads a single file to S3")
 
-  private val bucket = lazyProperty[String]("bucket")
-  def bucket(v: Any): Unit = bucket.set(v)
-
   private val file = lazyProperty[File]("file")
   def file(v: Any): Unit = file.set(v)
+
+  private val bucket = lazyProperty[String]("bucket")
+  def bucket(v: Any): Unit = bucket.set(v)
 
   private val key = lazyProperty[String]("key")
   def key(v: Any): Unit = key.set(v)
@@ -28,8 +28,8 @@ class UploadFile extends Upload {
     for {
       r <- region
       c <- IO.pure(AmazonS3ClientBuilder.standard().withRegion(r).build())
-      b <- bucket.run
       f <- file.run
+      b <- bucket.run
       k <- key.run
       _ <- maybeFailIfObjectExists(b, k).run(c)
       g <- maybeInterpolate(f)
