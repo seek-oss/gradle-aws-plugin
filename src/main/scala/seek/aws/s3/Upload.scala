@@ -77,7 +77,7 @@ abstract class Upload extends AwsTask {
     } yield out
   }
 
-  private def searchAndReplace(i: Interpolation)(line: String): IO[String] = {
+  private def searchAndReplace(i: Interpolation)(line: String): IO[String] =
     i.pattern.findAllMatchIn(line).foldLeft(IO.pure(line)) { (z, t) =>
       val token = t.matched.stripPrefix(i.startToken).stripSuffix(i.endToken)
       val replacement = i.replace.get(token) match {
@@ -85,11 +85,10 @@ abstract class Upload extends AwsTask {
         case None    => LookupProject.lookup(project, token)
       }
       for {
-        r <- replacement
+        r  <- replacement
         zz <- z
       } yield zz.replace(t.matched, r)
     }
-  }
 
   private class InterpolationBean(val should: ShouldInterpolate) {
     import LazyProperty.render
