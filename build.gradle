@@ -93,4 +93,8 @@ pluginBundle {
             tags = ['SEEK', 'AWS', 'Scala', 'CloudFormation']
         }
     }
+
+    mavenCoordinates {
+        version = baseVersion
+    }
 }

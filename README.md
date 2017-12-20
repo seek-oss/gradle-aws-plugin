@@ -81,7 +81,7 @@ The methods of the `config` extension are described below:
 |`allowCommonConfig`     |`Boolean`       |Whether common config is allowed          |No      |`true`
 |`commonConfigName`      |`String`        |Name of the common configuration file     |No      |"common"
 
-The **`naming`** method specifies how configuration files are named. The default is "environment". This means that by default the value of "environment" will determine the name of the configuration file(s) to load. "environment" can be specified either as a parameter in AWS Parameter Store or a Gradle project property. If "environment" equals "production" the Config plugin will load any files named `production.conf`, `production.json`, and `production.properties`.
+The **`naming`** method specifies how configuration files are named. The default is "environment". This means that by default the value of "environment" will determine the name of the configuration file(s) to load. The environment can be specified either as a parameter in AWS Parameter Store or a Gradle project property. If the environment is set to "production" the Config plugin will load any files named `production.conf`, `production.json`, and `production.properties`.
 
 AWS Parameter Store provides a nice mechanism for resolution of the environment as this allows you to deploy your application without needing to specify which environment you are deploying to as the environment is determined by the AWS account you are authenticated against. If you use Gradle properties you'll need to remember to override the `environment` property depending on the environment you are deploying to.
 
