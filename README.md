@@ -276,7 +276,7 @@ task upload(type: UploadFile) {
 
 #### `UploadFiles`
 
-The `seek.aws.s3.UploadFile` task uploads a single file, with optional interpolation, to an S3 bucket with a specified key.
+The `seek.aws.s3.UploadFiles` task uploads a group of files, with optional interpolation, to an S3 bucket with a specified key.
 
 **Example:**
 
