@@ -198,7 +198,7 @@ The **`parameters`** property can be used to specify a map of key-value pairs to
 
 ```gradle
 cloudFormation {
-    ...
+    //...
     parameters ([
         BuildBucket: lookup('buildBucket'),
         LambdaArtefactKey: "${buildPrefix}/${service}.jar",
@@ -206,7 +206,7 @@ cloudFormation {
         TableName: stackOutput('scaffolding', 'TableName'),
         KinesisStream: parameterStore('eventStream')
     ])
-    ...
+    //...
 }
 ```
 
@@ -285,7 +285,7 @@ task upload(type: UploadFiles) {
 
 #### Interpolation
 
-Both the `UploadFile` and `UploadFiles` support interpolation of files prior to upload. Interpolation leverages the Config plugin to resolve tokenised keys to values.
+Both `UploadFile` and `UploadFiles` support interpolation of files prior to upload. Interpolation leverages the Config plugin to resolve tokenised keys to values.
 
 Shown below is an `UploadFiles` task that interpolates all files using the Config plugin to resolve configuration keys.
 
@@ -304,7 +304,7 @@ By default interpolation uses the start token `{{{` and the end token `}}}`. So 
 The {{{animal}}} jumps over the {{{otherAnimal}}}
 ```
 
-the keys `animal` and `otherAnimal` would be resolved using the Config plugin and would be substituted into a copy of the file (stored in the `build` directory) prior to upload.
+the keys `animal` and `otherAnimal` would be resolved using the Config plugin and would be substituted into a copy of the file (stored in the `build` directory) prior to upload. If a key cannot be found the upload task fails and prints the name of the unresolved key.
 
 Below is an example of a call to `interpolate` which overrides the default start and end tokens:
 
@@ -327,5 +327,74 @@ To see all the `interpolate` overrides see the source [here](src/main/scala/seek
 
 
 ### CloudFormation Tasks
+
+#### `CreateOrUpdateStack`
+
+The `seek.aws.cloudformation.CreateOrUpdateStack` task is created with the name **`createOrUpdateStack`** when the CloudFormation plugin is applied to a Gradle project. This task is configured with the values of the `cloudFormation` extension as described in the CloudFormation plugin section.
+
+#### `VerifyStack`
+
+The `seek.aws.cloudformation.CreateOrUpdateStack` task is created with the name **`verifyStack`** when the CloudFormation plugin is applied to a Gradle project. This task verifies that all stack parameter values and tag values can be resolved. If they can be resolved the key value pairs are logged at the `lifecycle` log level. If any parameters or tags cannot be resolved the task fails with an exception that describes the offending configuration key.
+
+This task is useful during development cycle when you wish to see the parameters and tags that the stack will be created with without going through a full deployment.
+
+#### `DeleteStack`
+
+The `seek.aws.cloudformation.DeleteStack` task is created with the name **`deleteStack`** when the CloudFormation plugin is applied to a Gradle project. This task provides a means of deleting the stack specified by the `cloudFormation` extension block. If the stack is not present then the task exits quietly.
+
+#### `DeleteStacks`
+
+The `seek.aws.cloudformation.DeleteStacks` task can be used to delete one or more stacks that match a specified regex. By default this task is configured with a safety switch that will only allow a maximum of 3 stacks to be deleted. This is to prevent accidental deletion of all stacks in your account. The safety switch and the limit can be configured at your own risk!
+
+**Example:**
+
+```gradle
+task tearDown(type: DeleteStacks) {
+    nameMatching 'my-app-.*'
+}
+```
+
+|Method        |Argument type|Description                                                 |Required|Default
+|--------------|-------------|------------------------------------------------------------|--------|-------
+|`nameMatching`|`String`     |Regex that is matched against all stacks in the region      |Yes     |-
+|`safetyOn`    |`Boolean`    |Whether the saftey switch is on                             |No      |`true`
+|`safetyLimit` |`Integer`    |Maximum number of stacks that can be deleted if safety is on|No      |3
+
+
+### Simple Systems Manager Tasks
+
+#### `PutParameters`
+
+The `seek.aws.ssm.PutParameters` task can be used to upload one or more parameters to AWS Parameter Store.
+
+**Example:**
+
+```gradle
+task putParameters(type: PutParameters) {
+    parameter('vpcId') {
+        value = stackOutput('account', 'VpcId')
+        type = 'String'
+        description = 'ID of the primary VPC'          
+    }
+    parameter('artifactoryPassword') {
+        value = lookup('artifactoryPassword')
+        type = 'SecureString'
+        description = 'Password for Artifactory'
+    }
+}
+```
+
+The `putParameters` task can upload an arbitrary number of parameters. Each parameter is added by calling the `parameter` method with the name of the parameter (this can be hard-coded or a lookup) and a closure that configures the parameter. The configuration closure can set the following properties (which can also be hard-coded or use lookups):
+
+|Property        |Argument type|Description                                      |Required|Default
+|----------------|-------------|-------------------------------------------------|--------|-------
+|`value`         |`String`     |Value of the parameter                           |Yes     |-
+|`type`          |`String`     |Either "String", "StringList", or "SecureString" |Yes     |-
+|`description`   |`String`     |Description of the parameter                     |Yes     |-
+|`keyId`         |`String`     |KMS key ID of the key to use to encrypt the value|No      |-
+|`overwrite`     |`String`     |Whether overwriting is allowed                   |No      |true
+|`allowedPattern`|`String`     |Allowed pattern regex for the value              |No      |-
+
+For more details on the `put-parameters` AWS API call see [here](http://docs.aws.amazon.com/cli/latest/reference/ssm/put-parameter.html).
 
 ## Full Example

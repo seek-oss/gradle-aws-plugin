@@ -52,8 +52,8 @@ class PutParameters extends AwsTask {
     import LazyProperty.render
 
     @BeanProperty var value: Any = _
-    @BeanProperty var description: Any = _
     @BeanProperty var `type`: Any = _
+    @BeanProperty var description: Any = _
     @BeanProperty var keyId: Any = _
     @BeanProperty var overwrite: Any = _
     @BeanProperty var allowedPattern: Any = _
