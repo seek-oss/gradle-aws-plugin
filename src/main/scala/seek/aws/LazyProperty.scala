@@ -32,6 +32,9 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
   def isSet: Boolean =
     thing.isDefined
 
+  def or(that: LazyProperty[A]): LazyProperty[A] =
+    if (isSet) this else that
+
   private def render(v: Any)(implicit tag: ClassTag[A]): IO[A] =
     v match {
       case l: Lookup     => l.run(project).flatMap(render)

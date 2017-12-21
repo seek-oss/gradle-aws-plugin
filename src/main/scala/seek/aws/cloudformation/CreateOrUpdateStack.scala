@@ -18,10 +18,9 @@ class CreateOrUpdateStack extends AwsTask {
 
   override def run: IO[Unit] =
     for {
-      r  <- region
       to <- project.cfnExt.stackWaitTimeout
       sp <- StackDescription(project)
-      c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
+      c  <- buildClient(AmazonCloudFormationClientBuilder.standard())
       _  <- createOrUpdate(sp).run(c)
       _  <- waitForStack(sp.name, to).run(c)
     } yield ()

@@ -1,8 +1,8 @@
 package seek.aws
 
 import cats.effect.IO
-import com.amazonaws.regions.Regions
-import com.amazonaws.regions.Regions.fromName
+import com.amazonaws.auth._
+import com.amazonaws.client.builder.AwsClientBuilder
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import seek.aws.instances._
@@ -14,8 +14,11 @@ abstract class AwsTask extends DefaultTask with HasLazyProperties {
 
   setGroup("AWS")
 
-  private val _region = lazyProperty[String]("region")
-  def region(v: Any) = _region.set(v)
+  private val region = lazyProperty[String]("region")
+  def region(v: Any): Unit = region.set(v)
+
+  private val roleArn = lazyProperty[String]("roleArn")
+  def roleArn(v: Any): Unit = roleArn.set(v)
 
   protected val logger = getLogger
 
@@ -25,8 +28,21 @@ abstract class AwsTask extends DefaultTask with HasLazyProperties {
 
   protected def run: IO[Unit]
 
-  protected def region: IO[Regions] =
-    (if (_region.isSet) _region.run
-    else project.awsExt.region.run).map(fromName)
+  protected def buildClient[C](builder: AwsClientBuilder[_, C]): IO[C] =
+    for {
+      r <- region.or(project.awsExt.region).run
+      c <- credentials
+      _ = builder.setRegion(r)
+      _ = builder.setCredentials(c)
+    } yield builder.build()
+
+  private def credentials: IO[AWSCredentialsProvider] =
+    roleArn.or(project.awsExt.roleArn).runOptional.map {
+      case None      => DefaultAWSCredentialsProviderChain.getInstance
+      case Some(arn) =>
+        new STSAssumeRoleSessionCredentialsProvider.Builder(arn, project.getName)
+          .withRoleSessionDurationSeconds(900)
+          .build()
+    }
 }
 

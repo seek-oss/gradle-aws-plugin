@@ -26,11 +26,10 @@ class UploadFile extends Upload {
 
   override def run: IO[Unit] =
     for {
-      r <- region
-      c <- IO.pure(AmazonS3ClientBuilder.standard().withRegion(r).build())
       f <- file.run
       b <- bucket.run
       k <- key.run
+      c <- buildClient(AmazonS3ClientBuilder.standard())
       _ <- maybeFailIfObjectExists(b, k).run(c)
       g <- maybeInterpolate(f)
       _ <- upload(b, k, g).run(c)

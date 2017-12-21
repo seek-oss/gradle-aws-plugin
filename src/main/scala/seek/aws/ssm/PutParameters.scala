@@ -25,9 +25,8 @@ class PutParameters extends AwsTask {
 
   override def run: IO[Unit] =
     for {
-      r  <- region
-      c  <- IO.pure(AWSSimpleSystemsManagementClientBuilder.standard().withRegion(r).build())
       ps <- gather(parameters)
+      c  <- buildClient(AWSSimpleSystemsManagementClientBuilder.standard())
       _  <- putParameters(ps).run(c)
     } yield ()
 

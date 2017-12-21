@@ -29,12 +29,11 @@ class DeleteStacks extends AwsTask {
 
   override def run: IO[Unit] =
     for {
-      r  <- region
-      c  <- IO.pure(AmazonCloudFormationClientBuilder.standard().withRegion(r).build())
       n  <- nameMatching.run
       so <- safetyOn.run
       sl <- safetyLimit.run
       to <- project.cfnExt.stackWaitTimeout
+      c  <- buildClient(AmazonCloudFormationClientBuilder.standard())
       ds <- deleteStacks(n, so, sl).run(c)
       _  <- waitForStacks(ds, to).run(c)
     } yield ()
