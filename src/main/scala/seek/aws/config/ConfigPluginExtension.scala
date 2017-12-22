@@ -1,12 +1,13 @@
 package seek.aws
 package config
 
+import cats.data.OptionT
+import cats.data.OptionT._
 import cats.effect.IO
+import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
-import org.gradle.api.{GradleException, Project}
 import simulacrum.typeclass
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 class ConfigPluginExtension(implicit project: Project) {
@@ -14,7 +15,7 @@ class ConfigPluginExtension(implicit project: Project) {
 
   private var naming: String = "environment"
   def naming(v: String): Unit = naming = v
-  def configName: IO[String] = buildConfigName(naming)
+  private[aws] def configName: IO[String] = buildConfigName(naming)
 
   private[aws] val files = mutable.ArrayBuffer.empty[FileCollection]
   def addFiles(fs: FileCollection): Unit = files += fs
@@ -44,35 +45,17 @@ object ConfigPluginExtension {
   }
 
   private def resolve(key: String, naming: String)(implicit p: Project): IO[String] =
-    lookupGradle(key).attempt.flatMap {
-      case Right(v) => IO.pure(v)
-      case Left(th) =>
-        if (!th.isInstanceOf[LookupKeyNotFound]) IO.raiseError(th)
-        else
-          lookupParameterStore(key).attempt.map {
-            case Right(v) => v
-            case Left(th) =>
-              if (!th.isInstanceOf[LookupKeyNotFound]) throw th
-              else
-                throw new GradleException(
-                  s"Could not resolve property '${key}' in either Gradle project properties or AWS Parameter Store. " +
-                    s"Property '${key}' is required to build config naming convention '${key}'.")
-          }
-    }
+    notEmpty(LookupGradle(key).runOptional(p))
+      .orElse(notEmpty(LookupParameterStore(key).runOptional(p))).value
+      .flatMap {
+        case Some(v) => IO.pure(v)
+        case None    => raiseError(
+          s"Could not resolve property '${key}' in either Gradle project properties or AWS Parameter Store. " +
+          s"Property '${key}' is required to build config naming convention '${naming}'.")
+      }
 
-  private def lookupGradle(key: String)(implicit p: Project): IO[String] =
-    IO(p.getProperties.asScala.get(key).map(_.asInstanceOf[String]) match {
-      case None                 => throw new LookupKeyNotFound(key)
-      case Some(v) if v.isEmpty => throw new LookupKeyNotFound(key)
-      case Some(v)              => v
-    })
-
-  private def lookupParameterStore(key: String)(implicit p: Project): IO[String] =
-    Lookup.parameterStore(key).run(p).attempt.map {
-      case Left(th)              => throw th
-      case Right(v) if v.isEmpty => throw new LookupKeyNotFound(key)
-      case Right(v)              => v
-    }
+  private def notEmpty(o: OptionT[IO, String]): OptionT[IO, String] =
+    o.flatMap(s => if (s == null || s.isEmpty) none else some(s))
 }
 
 @typeclass trait HasConfigPluginExtension[A] {

@@ -6,7 +6,7 @@ import java.io.File
 import cats.effect.IO
 import org.gradle.api.Project
 import seek.aws.LazyProperty._
-import seek.aws.config.LookupProject
+import seek.aws.config.Lookup
 import simulacrum.typeclass
 
 import scala.collection.JavaConverters._
@@ -41,7 +41,7 @@ class CloudFormationPluginExtension(implicit project: Project) {
       lookupTags.foldLeft(IO.pure(ts)) { (z, t) =>
         for {
           zz <- z
-          tv <- LookupProject.lookup(project, pascalToCamelCase(t))
+          tv <- Lookup.lookup(pascalToCamelCase(t)).run(project)
         } yield zz + (t -> tv)
       }
     }

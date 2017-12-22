@@ -1,17 +1,17 @@
 package seek.aws
 package cloudformation
 
+import java.time.Instant.now
+
 import cats.data.Kleisli
 import cats.data.Kleisli._
 import cats.effect.IO
 import com.amazonaws.services.cloudformation.model.{DeleteStackRequest, Stack}
 import com.amazonaws.services.cloudformation.{AmazonCloudFormation, AmazonCloudFormationClientBuilder}
-import java.time.Instant.now
-import scala.concurrent.duration._
 import seek.aws.cloudformation.instances._
 import seek.aws.cloudformation.syntax._
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, _}
 
 class DeleteStacks extends AwsTask {
   import CloudFormation._

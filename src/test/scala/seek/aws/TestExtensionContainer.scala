@@ -1,8 +1,8 @@
 package seek.aws
 
-import org.gradle.api.{Action, Project}
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.reflect.TypeOf
+import org.gradle.api.{Action, Project}
 import seek.aws.cloudformation.CloudFormationPluginExtension
 import seek.aws.config.ConfigPluginExtension
 

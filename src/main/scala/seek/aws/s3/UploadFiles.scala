@@ -7,9 +7,7 @@ import cats.data.Kleisli
 import cats.data.Kleisli._
 import cats.effect.IO
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
-import org.gradle.api.file.{FileCollection, FileTreeElement}
-
-import scala.collection.mutable
+import org.gradle.api.file.FileCollection
 
 class UploadFiles extends Upload {
   import S3._

@@ -10,7 +10,7 @@ import groovy.lang.Closure
 import groovy.lang.Closure.DELEGATE_FIRST
 import org.gradle.api.file.FileCollection
 import seek.aws.LazyProperty._
-import seek.aws.config.LookupProject
+import seek.aws.config.Lookup
 
 import scala.beans.BeanProperty
 import scala.collection.JavaConverters._
@@ -82,7 +82,7 @@ abstract class Upload extends AwsTask {
       val token = t.matched.stripPrefix(i.startToken).stripSuffix(i.endToken)
       val replacement = i.replace.get(token) match {
         case Some(v) => IO.pure(v)
-        case None    => LookupProject.lookup(project, token)
+        case None    => Lookup.lookup(token).run(project)
       }
       for {
         r  <- replacement

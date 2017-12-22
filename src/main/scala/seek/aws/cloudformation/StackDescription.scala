@@ -1,4 +1,5 @@
-package seek.aws.cloudformation
+package seek.aws
+package cloudformation
 
 import java.io.File
 
@@ -9,9 +10,7 @@ import org.gradle.api.Project
 import seek.aws.cloudformation.CloudFormationTemplate.parseTemplateParameters
 import seek.aws.cloudformation.instances._
 import seek.aws.cloudformation.syntax._
-import seek.aws.config.Lookup.lookup
-import seek.aws.config.LookupKeyNotFound
-import seek.aws.pascalToCamelCase
+import seek.aws.config.{LookupConfig, LookupGradle, LookupMap, LookupParameterStore}
 
 import scala.io.Source.fromFile
 
@@ -39,7 +38,7 @@ object StackDescription {
     for {
       sn <- project.cfnExt.stackName.run
       tf <- project.cfnExt.templateFile.run
-      pf <- project.cfnExt.policyFile.runOptional
+      pf <- project.cfnExt.policyFile.runOptional.value
       ps <- project.cfnExt.parameters
       ts <- project.cfnExt.tags
       tb <- slurp(tf)
@@ -50,10 +49,14 @@ object StackDescription {
   private def resolveStackParameters(
       project: Project, templateFile: File, parameterOverrides: Map[String, String]): IO[Map[String, String]] =
     parseTemplateParameters(templateFile).flatMap(_.foldLeft(IO.pure(Map.empty[String, String])) { (z, p) =>
-      lookup(pascalToCamelCase(p.name), parameterOverrides).run(project).attempt.flatMap {
-        case Right(v) => z.map(_ + (p.name -> v))
-        case Left(th) =>
-          if (!p.required && th.isInstanceOf[LookupKeyNotFound]) z else IO.raiseError(th)
+      val key = pascalToCamelCase(p.name)
+      LookupGradle(key)
+        .orElse(LookupMap(parameterOverrides, key))
+        .orElse(LookupConfig(key))
+        .orElse(LookupParameterStore(key)).runOptional(project).value.flatMap {
+        case None if !p.required => z
+        case None                => raiseError(s"Could not resolve stack parameter '${p.name}'")
+        case Some(v)             => z.map(_ + (p.name -> v))
       }
     })
 

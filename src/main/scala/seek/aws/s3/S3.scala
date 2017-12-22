@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.{DeleteObjectsRequest, ListObjectsV2Request, S3ObjectSummary}
 import fs2.Stream
 import fs2.Stream._
+
 import scala.collection.JavaConverters._
 
 sealed trait S3 {

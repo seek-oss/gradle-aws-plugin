@@ -2,6 +2,8 @@ package seek
 
 import cats.data.Kleisli
 import cats.effect.IO
+import com.amazonaws.auth.{AWSCredentialsProvider, DefaultAWSCredentialsProviderChain, STSAssumeRoleSessionCredentialsProvider}
+import com.amazonaws.client.builder.AwsClientBuilder
 import org.gradle.api.file.{FileCollection, FileTreeElement}
 import org.gradle.api.{GradleException, Project}
 import pureconfig._
@@ -17,6 +19,25 @@ package object aws {
       def awsExt(p: Project) =
         p.getExtensions.getByType(classOf[AwsPluginExtension])
     }
+  }
+
+  object client {
+    def build[C](builder: AwsClientBuilder[_, C], region: LazyProperty[String], roleArn: LazyProperty[String]): IO[C] =
+      for {
+        r <- region.run
+        c <- credentials(roleArn)
+        _ = builder.setRegion(r)
+        _ = builder.setCredentials(c)
+      } yield builder.build()
+
+    def credentials(roleArn: LazyProperty[String]): IO[AWSCredentialsProvider] =
+      roleArn.runOptional.value.map {
+        case None      => DefaultAWSCredentialsProviderChain.getInstance
+        case Some(arn) =>
+          new STSAssumeRoleSessionCredentialsProvider.Builder(arn, "Gradle")
+            .withRoleSessionDurationSeconds(900)
+            .build()
+      }
   }
 
   def raiseError[A](msg: String): IO[A] =

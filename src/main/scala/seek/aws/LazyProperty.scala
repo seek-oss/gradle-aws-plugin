@@ -1,5 +1,7 @@
 package seek.aws
 
+import cats.data.OptionT
+import cats.data.OptionT._
 import cats.effect.IO
 import groovy.lang.{Closure, GString}
 import org.gradle.api._
@@ -22,9 +24,8 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
         }
     }
 
-  def runOptional(implicit tag: ClassTag[A]): IO[Option[A]] =
-    if (isSet) run.map(Some(_))
-    else IO.pure(None)
+  def runOptional(implicit tag: ClassTag[A]): OptionT[IO, A] =
+    if (isSet) liftF(run) else none
 
   def set(x: Any): Unit =
     thing = Option(x)
@@ -32,7 +33,7 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
   def isSet: Boolean =
     thing.isDefined
 
-  def or(that: LazyProperty[A]): LazyProperty[A] =
+  def orElse(that: LazyProperty[A]): LazyProperty[A] =
     if (isSet) this else that
 
   private def render(v: Any)(implicit tag: ClassTag[A]): IO[A] =
@@ -56,7 +57,7 @@ object LazyProperty {
   def render[A](a: Any, name: String, default: A)(implicit p: Project, tag: ClassTag[A]): IO[A] = {
     val lp = lazyProperty[A](name)
     lp.set(a)
-    lp.runOptional.map(_.getOrElse(default))
+    lp.runOptional.value.map(_.getOrElse(default))
   }
 
   def renderAll[A](s: List[Any])(implicit p: Project): IO[List[A]] =
