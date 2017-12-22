@@ -40,7 +40,6 @@ The AWS plugin is configured via a plugin extension named `aws`:
 ```gradle
 aws {
     region 'us-west-1'
-    profile 'my-profile'
 }
 ```
 
@@ -50,10 +49,13 @@ The methods of the `aws` extension are described below:
 |---------|---------------|-----------------------|--------|-------
 |`region` |`String`       |AWS region             |Yes     |-
 |`profile`|`String`       |AWS credentials profile|No      |"default"
+|`roleArn`|`String`       |IAM Role to assume     |No      |-
 
 The **`region`** method is used to specify the [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html) that tasks will operate against by default. All AWS tasks also have a `region` method that takes precedence over the region specified in the `aws` extension. Tasks that do not specify a `region` fall back to the region defined in the `aws` extension. The `region` property is not technically required in `aws` but if it is not specified every AWS task must specify a region.
 
 All AWS tasks use the [default credentials provider chain](http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html). The **`profile`** method of `aws` can be used if you use named profiles in `~/.aws/credentials` otherwise it does not need to be specified.
+
+The **`roleArn`** method can be used to specify the ARN of an IAM role to [assume](http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) when running AWS tasks. All AWS tasks also have a `roleArn` method that takes precedence over the role specified in the `aws` extension.
 
 The `aws` extension can use lookups to lazily set values via configuration. Lookups are described in the next section.
 
@@ -276,7 +278,7 @@ task upload(type: UploadFile) {
 
 #### `UploadFiles`
 
-The `seek.aws.s3.UploadFiles` task uploads a group of files, with optional interpolation, to an S3 bucket with a specified key.
+The `seek.aws.s3.UploadFile` task uploads a single file, with optional interpolation, to an S3 bucket with a specified key.
 
 **Example:**
 
