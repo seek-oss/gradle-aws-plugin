@@ -9,7 +9,8 @@ import org.gradle.api.Project
 import seek.aws.cloudformation.CloudFormationTemplate.parseTemplateParameters
 import seek.aws.cloudformation.instances._
 import seek.aws.cloudformation.syntax._
-import seek.aws.config.{LookupKeyNotFound, LookupProject}
+import seek.aws.config.Lookup.lookup
+import seek.aws.config.LookupKeyNotFound
 import seek.aws.pascalToCamelCase
 
 import scala.io.Source.fromFile
@@ -49,7 +50,7 @@ object StackDescription {
   private def resolveStackParameters(
       project: Project, templateFile: File, parameterOverrides: Map[String, String]): IO[Map[String, String]] =
     parseTemplateParameters(templateFile).flatMap(_.foldLeft(IO.pure(Map.empty[String, String])) { (z, p) =>
-      LookupProject.lookup(project, pascalToCamelCase(p.name), parameterOverrides).attempt.flatMap {
+      lookup(pascalToCamelCase(p.name), parameterOverrides).run(project).attempt.flatMap {
         case Right(v) => z.map(_ + (p.name -> v))
         case Left(th) =>
           if (!p.required && th.isInstanceOf[LookupKeyNotFound]) z else IO.raiseError(th)
