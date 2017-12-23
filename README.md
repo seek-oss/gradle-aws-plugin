@@ -48,14 +48,11 @@ The methods of the `aws` extension are described below:
 |Method   |Argument type  |Description            |Required|Default
 |---------|---------------|-----------------------|--------|-------
 |`region` |`String`       |AWS region             |Yes     |-
-|`profile`|`String`       |AWS credentials profile|No      |"default"
 |`roleArn`|`String`       |IAM Role to assume     |No      |-
 
-The **`region`** method is used to specify the [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html) that tasks will operate against by default. All AWS tasks also have a `region` method that takes precedence over the region specified in the `aws` extension. Tasks that do not specify a `region` fall back to the region defined in the `aws` extension. The `region` property is not technically required in `aws` but if it is not specified every AWS task must specify a region.
+The **`region`** method is used to specify the [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html) that tasks will operate against by default. All AWS tasks also have a `region` method that takes precedence over the region specified in the `aws` extension. Tasks that do not specify a `region` fall back to the region defined in the `aws` extension. The `region` property is not technically required in `aws` but if it is not specified you must specify the region for every AWS task.
 
-All AWS tasks use the [default credentials provider chain](http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html). The **`profile`** method of `aws` can be used if you use named profiles in `~/.aws/credentials` otherwise it does not need to be specified.
-
-The **`roleArn`** method can be used to specify the ARN of an IAM role to [assume](http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) when running AWS tasks. All AWS tasks also have a `roleArn` method that takes precedence over the role specified in the `aws` extension.
+The **`roleArn`** method can be used to specify the ARN of an IAM role to [assume](http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) when running AWS tasks. All AWS tasks also have a `roleArn` method that takes precedence over the role specified in the `aws` extension. If no role is specified the [default credentials provider chain](http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html) will be used.
 
 The `aws` extension can use lookups to lazily set values via configuration. Lookups are described in the next section.
 

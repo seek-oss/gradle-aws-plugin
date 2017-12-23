@@ -9,9 +9,6 @@ class AwsPluginExtension(implicit project: Project) {
   private[aws] val region = lazyProperty[String]("region")
   def region(v: Any): Unit = region.set(v)
 
-  private[aws] val profile = lazyProperty[String]("profile", "default")
-  def profile(v: Any): Unit = profile.set(v)
-
   private[aws] val roleArn = lazyProperty[String]("roleArn")
   def roleArn(v: Any): Unit = roleArn.set(v)
 }
