@@ -398,7 +398,7 @@ task putParameters(type: PutParameters) {
 }
 ```
 
-The `putParameters` task can upload an arbitrary number of parameters. Each parameter is added by calling the `parameter` method with the name of the parameter (this can be hard-coded or a lookup) and a closure that configures the parameter. The configuration closure can set the following properties (which can also be hard-coded or use lookups):
+The `PutParameters` task can upload an arbitrary number of parameters. Each parameter is added by calling the `parameter` method with the name of the parameter (this can be hard-coded or a lookup) and a closure that configures the parameter. The configuration closure can set the following properties (which can also be hard-coded or use lookups):
 
 |Property        |Argument type|Description                                      |Required|Default
 |----------------|-------------|-------------------------------------------------|--------|-------
@@ -411,4 +411,26 @@ The `putParameters` task can upload an arbitrary number of parameters. Each para
 
 For more details on the `put-parameters` AWS API call see [here](http://docs.aws.amazon.com/cli/latest/reference/ssm/put-parameter.html).
 
+### Simple Notification Service Tasks
+
+#### `SubscribeTopic`
+
+The `seek.aws.sns.SubscribeTopic` task can be used to add one or more subscriptions to an SNS topic if they do not already exist.
+
+**Example:**
+
+```gradle
+task subscribeTopic(type: SubscribeTopic) {
+    topicArn lookup('alertTopic')
+    subscribe('email', 'alerts@example.com')
+    subscribe(lookup('pagerProtocol'), lookup('pagerEndpoint'))
+}
+```
+
+The `SubscribeTopic` task can add an arbitrary number of subscriptions to an existing SNS topic. Each subscription is added by calling the `subscribe` method passing the subscription protocol and endpoint as arguments. These arguments can be hard-coded or use lookups.
+
+This task is safe to call multiple times as it will only add subscriptions which do not already exist.
+
 ## Full Example
+
+Coming soon...

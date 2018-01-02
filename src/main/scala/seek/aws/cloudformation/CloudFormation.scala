@@ -38,7 +38,7 @@ sealed trait CloudFormation {
             val ss = res.getStacks.asScala
             Option(res.getNextToken) match {
               case t @ Some(_) => Some(ss, X(t, false))
-              case _           => Some(ss, X(t, true))
+              case _           => Some(ss, X(None, true))
             }
           }
       }
