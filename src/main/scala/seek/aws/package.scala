@@ -32,11 +32,11 @@ package object aws {
 
     def credentials(roleArn: LazyProperty[String]): IO[AWSCredentialsProvider] =
       roleArn.runOptional.value.map {
-        case None      => DefaultAWSCredentialsProviderChain.getInstance
-        case Some(arn) =>
+        case Some(arn) if arn.nonEmpty =>
           new STSAssumeRoleSessionCredentialsProvider.Builder(arn, "Gradle")
             .withRoleSessionDurationSeconds(900)
             .build()
+        case _ => DefaultAWSCredentialsProviderChain.getInstance
       }
   }
 
