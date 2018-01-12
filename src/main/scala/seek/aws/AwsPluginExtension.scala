@@ -4,13 +4,15 @@ import org.gradle.api.Project
 import simulacrum.typeclass
 
 class AwsPluginExtension(implicit project: Project) {
-  import HasLazyProperties._
 
-  private[aws] val region = lazyProperty[String]("region")
-  def region(v: Any): Unit = region.set(v)
+  private[aws] var region: Option[String] = None
+  def region(v: String): Unit = region = Option(v)
 
-  private[aws] val roleArn = lazyProperty[String]("roleArn")
-  def roleArn(v: Any): Unit = roleArn.set(v)
+  private[aws] var roleArn: Option[String] = None
+  def roleArn(v: String): Unit = {
+    println(s"Setting roleArn to ${v}")
+    roleArn = Option(v)
+  }
 }
 
 @typeclass trait HasAwsPluginExtension[A] {

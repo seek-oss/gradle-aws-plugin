@@ -47,14 +47,12 @@ The methods of the `aws` extension are described below:
 
 |Method   |Argument type  |Description            |Required|Default
 |---------|---------------|-----------------------|--------|-------
-|`region` |`String`       |AWS region             |Yes     |-
+|`region` |`String`       |AWS region             |No      |-
 |`roleArn`|`String`       |IAM Role to assume     |No      |-
 
-The **`region`** method is used to specify the [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html) that tasks will operate against by default. All AWS tasks also have a `region` method that takes precedence over the region specified in the `aws` extension. Tasks that do not specify a `region` fall back to the region defined in the `aws` extension. The `region` property is not technically required in `aws` but if it is not specified you must specify the region for every AWS task.
+The **`region`** method is used to specify the [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html) that tasks will operate against by default. All AWS tasks also have a `region` method that takes precedence over the region specified in the `aws` extension. Tasks that do not specify a `region` fall back to the region defined in the `aws` extension. `region` is not technically required but is recommended to avoid accidentally deploying your application to the wrong region.
 
 The **`roleArn`** method can be used to specify the ARN of an IAM role to [assume](http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) when running AWS tasks. All AWS tasks also have a `roleArn` method that takes precedence over the role specified in the `aws` extension. If no role is specified the [default credentials provider chain](http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html) will be used.
-
-The `aws` extension can use lookups to lazily set values via configuration. Lookups are described in the next section.
 
 ### Config Plugin
 The Config plugin is applied by the AWS plugin so it does not need to be manually applied to Gradle projects that also apply `seek.aws`. This plugin allows AWS tasks to be configured with values that are resolved from configuration sources rather than needing to be hardcoded. Configuration sources can include Gradle project properties, closures, configuration files, [AWS Parameter Store](http://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-paramstore.html) and [CloudFormation stack outputs](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html).

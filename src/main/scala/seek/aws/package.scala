@@ -2,7 +2,7 @@ package seek
 
 import cats.data.Kleisli
 import cats.effect.IO
-import com.amazonaws.auth.{AWSCredentialsProvider, DefaultAWSCredentialsProviderChain, STSAssumeRoleSessionCredentialsProvider}
+import com.amazonaws.auth._
 import com.amazonaws.client.builder.AwsClientBuilder
 import org.gradle.api.file.{FileCollection, FileTreeElement}
 import org.gradle.api.{GradleException, Project}
@@ -22,16 +22,14 @@ package object aws {
   }
 
   object client {
-    def build[C](builder: AwsClientBuilder[_, C], region: LazyProperty[String], roleArn: LazyProperty[String]): IO[C] =
-      for {
-        r <- region.run
-        c <- credentials(roleArn)
-        _ = builder.setRegion(r)
-        _ = builder.setCredentials(c)
-      } yield builder.build()
+    def build[C](builder: AwsClientBuilder[_, C], region: Option[String], roleArn: Option[String]): IO[C] = {
+      if (region.isDefined) builder.setRegion(region.get)
+      builder.setCredentials(credentials(roleArn))
+      IO(builder.build())
+    }
 
-    def credentials(roleArn: LazyProperty[String]): IO[AWSCredentialsProvider] =
-      roleArn.runOptional.value.map {
+    def credentials(roleArn: Option[String]): AWSCredentialsProvider =
+      roleArn match {
         case Some(arn) if arn.nonEmpty =>
           new STSAssumeRoleSessionCredentialsProvider.Builder(arn, "Gradle")
             .withRoleSessionDurationSeconds(900)
