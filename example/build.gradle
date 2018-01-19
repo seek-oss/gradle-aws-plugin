@@ -1,0 +1,47 @@
+plugins {
+    id 'com.github.johnrengelman.plugin-shadow' version '2.0.2'
+    id 'seek.cloudformation' version '0.0.8'
+    id 'scala'
+}
+
+apply from: 'gradle/dependencies.gradle'
+
+group = 'seek'
+version = '0.0.1'
+
+import static seek.aws.config.Lookup.lookup
+import seek.aws.s3.UploadFile
+
+ext {
+    service = 'example-project'
+    lambdaArtefactKey = "${service}/${version}/${service}.jar"
+}
+
+aws {
+    region 'ap-southeast-2'
+}
+
+config {
+    files fileTree('config').include('*.conf')
+}
+
+cloudFormation {
+    stackName service
+    templateFile file('src/main/cloudformation/application.yaml')
+    policyFile file('src/main/cloudformation/policy.json')
+    tags (['Owner', 'Project', 'Version'])
+}
+
+task uploadLambdaJar(type: UploadFile, dependsOn: shadowJar) {
+    bucket lookup('buildBucket')
+    key lambdaArtefactKey
+    file shadowJar.archivePath
+}
+
+task deploy(dependsOn: createOrUpdateStack) {
+    group 'Deployment'
+    description 'Top level deployment task'
+}
+
+shadowJar.dependsOn check
+createOrUpdateStack.dependsOn uploadLambdaJar

@@ -1,0 +1,143 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Example stack
+Parameters:
+  Service:
+    Description: Name of the service
+    Type: String
+  Version:
+    Description: Version of the service
+    Type: String
+  BuildBucket:
+    Description: Build bucket name
+    Type: String
+  LambdaArtefactKey:
+    Description: S3 key of the Lambda function code artefact
+    Type: String
+  LambdaHandlerReference:
+    Description: Reference of the Lambda function entry point handler function
+    Type: String
+  LambdaMemorySize:
+    Description: Memory size of the Lambda function in MB
+    Type: Number
+  LambdaTimeout:
+    Description: Timeout of the Lambda function in seconds
+    Type: Number
+  SourceBucket:
+    Description: Name for the source S3 bucket
+    Type: String
+  DestinationBucket:
+    Description: Name for the destination S3 bucket
+    Type: String
+  LogGroupRetentionDays:
+    Description: Number of days to retain CloudWatch logs
+    Type: Number
+
+Resources:
+  ###
+  ### Lambda Resources
+  ###
+
+  ExampleFunction:
+      Type: AWS::Lambda::Function
+      Properties:
+        Code:
+          S3Bucket: !Ref BuildBucket
+          S3Key: !Ref LambdaArtefactKey
+        Description: Projector of enrichment pipeline events
+        Environment:
+          Variables:
+            service_name: !Ref Service
+            service_version: !Ref Version
+            aws_region: !Ref AWS::Region
+            destination_bucket: !Ref DestinationBucket
+        FunctionName: !Ref Service
+        Handler: !Ref LambdaHandlerReference
+        MemorySize: !Ref LambdaMemorySize
+        Role: !GetAtt ExampleFunctionRole.Arn
+        Runtime: java8
+        Timeout: !Ref LambdaTimeout
+
+  ExampleFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+      - PolicyName: Projector-Policy
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - logs:DescribeLogGroups
+                - logs:DescribeLogStreams
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${ExampleLogGroup}:*"
+            - Effect: Allow
+              Action:
+                - cloudwatch:PutMetricData
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:GetObjectVersion
+              Resource:
+                - !Sub "arn:aws:s3:::${SourceBucket}/*"
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+              Resource:
+                - !Sub "arn:aws:s3:::${DestinationBucket}/*"
+
+  ExampleFunctionInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ExampleFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub "arn:aws:s3:::${SourceBucket}"
+
+  ###
+  ### S3 Resources
+  ###
+
+  ExampleSourceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref SourceBucket
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: "s3:ObjectCreated:*"
+            Function: !GetAtt ExampleFunction.Arn
+
+  ExampleDestinationBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref DestinationBucket
+
+  ###
+  ### CloudWatch Logs Resources
+  ###
+
+  ExampleLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: !Sub "/aws/lambda/${Service}"
+        RetentionInDays: !Ref LogGroupRetentionDays
+
+Outputs:
+  ExampleLogGroupName:
+    Description: Name of the CloudWatch log group that the example function logs to
+    Value: !Ref ExampleLogGroup

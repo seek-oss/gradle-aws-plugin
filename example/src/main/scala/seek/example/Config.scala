@@ -1,4 +1,4 @@
-package example
+package seek.example
 
 import com.typesafe.config.ConfigFactory
 import pureconfig.loadConfigOrThrow

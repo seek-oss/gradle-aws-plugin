@@ -1,4 +1,4 @@
-package example
+package seek.example
 
 import cats.effect.IO
 import com.amazonaws.services.lambda.runtime.Context
@@ -22,7 +22,7 @@ class EntryPoint extends LazyLogging {
     } yield ()).unsafeRunSync()
 
   private def copyAll(e: S3Event): IO[Unit] = {
-    val copies = e.getRecords.asScala.map(_.getS3).map { o =>
+    val copies = e.getRecords.asScala.toList.map(_.getS3).map { o =>
       copy(o.getBucket.getName, o.getObject.getKey, o.getObject.getVersionId)
     }
     copies.foldLeft(IO.unit)((z, c) => z.flatMap(_ => c))

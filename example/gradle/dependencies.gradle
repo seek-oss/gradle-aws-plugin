@@ -1,0 +1,32 @@
+//apply plugin: 'scala'
+
+ext {
+    scalaVersion = '2.12.4'
+    scalaBuildVersion = '2.12'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations.all {
+    exclude group: 'commons-logging', module: 'commons-logging'
+    exclude group: 'log4j', module: 'log4j'
+    exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+    compile "org.scala-lang:scala-library:${scalaVersion}"
+    compile "com.github.pureconfig:pureconfig_${scalaBuildVersion}:0.8.0"
+    compile "com.typesafe.scala-logging:scala-logging_${scalaBuildVersion}:3.7.2"
+    compile "org.typelevel:cats-core_${scalaBuildVersion}:1.0.0-MF"
+    compile "org.typelevel:cats-effect_${scalaBuildVersion}:0.4"
+    compile "com.amazonaws:aws-java-sdk-s3:1.11.267"
+    compile "com.amazonaws:aws-lambda-java-log4j:1.0.0"
+    compile "com.amazonaws:aws-lambda-java-events:2.0.2"
+    compile "ch.qos.logback:logback-classic:1.2.3"
+    compile "org.slf4j:jcl-over-slf4j:1.7.22"
+    compile "org.slf4j:log4j-over-slf4j:1.7.22"
+    compile "net.logstash.logback:logstash-logback-encoder:4.9"
+}

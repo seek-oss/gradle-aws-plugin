@@ -1,0 +1,35 @@
+<configuration>
+    <appender name="json" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                            "app": {
+                                "serviceName": "%mdc{ServiceName}",
+                                "serviceVersion": "%mdc{ServiceVersion}"
+                            },
+                            "lambda": {
+                               "functionName": "%mdc{FunctionName}",
+                                "functionVersion": "%mdc{FunctionVersion}",
+                                "requestId": "%mdc{RequestId}"
+                            },
+                            "log": {
+                                "timestamp": "%date{yyyy-MM-dd'T'HH:mm:ss.SSSX}",
+                                "logger": "%logger",
+                                "level": "%level",
+                                "thread": "%thread",
+                                "message": "%message",
+                                "stackTrace": "%ex"
+                            }
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="json" />
+    </root>
+</configuration>
