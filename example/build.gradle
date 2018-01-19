@@ -1,13 +1,21 @@
-plugins {
-    id 'com.github.johnrengelman.plugin-shadow' version '2.0.2'
-    id 'seek.cloudformation' version '0.0.8'
-    id 'scala'
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "gradle.plugin.seek:gradle-aws-plugin:0.0.10"
+        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.2"
+    }
 }
 
+apply plugin: 'seek.cloudformation'
+apply plugin: 'com.github.johnrengelman.shadow'
 apply from: 'gradle/dependencies.gradle'
+apply from: 'gradle/versioning.gradle'
 
 group = 'seek'
-version = '0.0.1'
 
 import static seek.aws.config.Lookup.lookup
 import seek.aws.s3.UploadFile

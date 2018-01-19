@@ -1,0 +1,8 @@
+ext.baseVersion = rootProject.file('version.txt').text.trim()
+if (!hasProperty('buildNumber') || buildNumber.trim().empty) {
+    version = "${baseVersion}.${UUID.randomUUID().toString().substring(0, 8)}-SNAPSHOT"
+} else {
+    version = "${baseVersion}.${buildNumber}"
+}
+
+logger.lifecycle("Project version is ${version}")

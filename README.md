@@ -107,7 +107,7 @@ import static seek.aws.config.Lookup.lookup
 
 The `lookup` method looks like:
 
-**Scala signature:** `def lookup(key: String): Lookup`  
+**Scala signature:** `def lookup(key: String): Lookup`
 **Java signature:** `public static Lookup lookup(String key)`
 
 The `lookup` method returns a `Lookup` object which is executed at task runtime. When a `Lookup` is run it will attempt to resolve the specified key first by using Gradle properties, then by using configuration files, and finally by using the AWS Parameter Store. Lookup resolution order is discussed in more detail in the next section.
@@ -125,12 +125,12 @@ task uploadLambdaJar(type: UploadFile, dependsOn: shadowJar) {
 
 The `seek.aws.config.Lookup` class provides two other lookup methods. One for querying CloudFormation for the output key of a specified stack:
 
-**Scala signature:** `def stackOutput(stackName: String, key: String): Lookup`  
+**Scala signature:** `def stackOutput(stackName: String, key: String): Lookup`
 **Java signature:** `public static Lookup stackOutput(String stackName, String key)`
 
 And one for querying AWS Parameter Store directly without considering local configuration:
 
-**Scala signature:** `def parameterStore(key: String): Lookup`  
+**Scala signature:** `def parameterStore(key: String): Lookup`
 **Java signature:** `public static Lookup parameterStore(String key)`
 
 These auxilliary lookup methods can be used in the same fashion as `seek.aws.config.Lookup.lookup`.
@@ -229,7 +229,7 @@ CloudFormation template parameters are resolved in the following order:
 1. Project properties (unless `config.allowPropertyOverrides` is set to `false`)
 1. Optional map specified to `cloudFormation.parameters`
 1. Configuration files
-1. AWS Parameter Store 
+1. AWS Parameter Store
 
 If all stack parameters are defined in any combination of Gradle project properties, configuration files, and AWS Parameter Store then the `parameters` property of `cloudFormation` is not necessary.
 
@@ -386,7 +386,7 @@ task putParameters(type: PutParameters) {
     parameter('vpcId') {
         value = stackOutput('account', 'VpcId')
         type = 'String'
-        description = 'ID of the primary VPC'          
+        description = 'ID of the primary VPC'
     }
     parameter('artifactoryPassword') {
         value = lookup('artifactoryPassword')
@@ -431,4 +431,4 @@ This task is safe to call multiple times as it will only add subscriptions which
 
 ## Full Example
 
-Coming soon...
+A full working example of a project that uses this plugin can be found in the [example](example) directory.

@@ -23,16 +23,16 @@ class EntryPoint extends LazyLogging {
 
   private def copyAll(e: S3Event): IO[Unit] = {
     val copies = e.getRecords.asScala.toList.map(_.getS3).map { o =>
-      copy(o.getBucket.getName, o.getObject.getKey, o.getObject.getVersionId)
+      val bucket = o.getBucket.getName
+      val key = o.getObject.getKey
+      val vid = Option(o.getObject.getVersionId).filterNot(_.isEmpty).orNull
+      for {
+        _ <- IO(s3.copyObject(new CopyObjectRequest(bucket, key, vid, config.destinationBucket, key)))
+        _ <- IO(logger.info(s"Copied $bucket/$key version $vid to ${config.destinationBucket}"))
+      } yield ()
     }
     copies.foldLeft(IO.unit)((z, c) => z.flatMap(_ => c))
   }
-
-  private def copy(bucket: String, key: String, vid: String): IO[Unit] =
-    for {
-      _ <- IO(s3.copyObject(new CopyObjectRequest(bucket, key, vid, config.destinationBucket, key)))
-      _ <- IO(logger.info(s"Copied $bucket/$key version $vid to ${config.destinationBucket}"))
-    } yield ()
 
   private def updateMdc(ctx: Context): IO[Unit] =
     IO {
