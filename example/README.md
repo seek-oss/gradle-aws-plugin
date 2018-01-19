@@ -12,4 +12,4 @@ The following command will deploy the service by specifying the environment on t
 gradle deploy -Penvironment=development
 ```
 
-The environment name is used to determine which configuration files to load. Since the project creates S3 buckets which must have globally unique names you'll need to rename the bucket names in [config/development.conf](config/development.conf) and [config/production.conf](config/production.conf).
+The environment name is used to determine which configuration files to load. Since the project makes use of S3 buckets (which must have globally unique names) you'll need to rename the bucket names specified in [config/development.conf](config/development.conf) and [config/production.conf](config/production.conf).
