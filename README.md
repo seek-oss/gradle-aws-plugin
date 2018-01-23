@@ -107,7 +107,7 @@ import static seek.aws.config.Lookup.lookup
 
 The `lookup` method looks like:
 
-**Scala signature:** `def lookup(key: String): Lookup`
+**Scala signature:** `def lookup(key: String): Lookup`  
 **Java signature:** `public static Lookup lookup(String key)`
 
 The `lookup` method returns a `Lookup` object which is executed at task runtime. When a `Lookup` is run it will attempt to resolve the specified key first by using Gradle properties, then by using configuration files, and finally by using the AWS Parameter Store. Lookup resolution order is discussed in more detail in the next section.
@@ -125,12 +125,12 @@ task uploadLambdaJar(type: UploadFile, dependsOn: shadowJar) {
 
 The `seek.aws.config.Lookup` class provides two other lookup methods. One for querying CloudFormation for the output key of a specified stack:
 
-**Scala signature:** `def stackOutput(stackName: String, key: String): Lookup`
+**Scala signature:** `def stackOutput(stackName: String, key: String): Lookup`  
 **Java signature:** `public static Lookup stackOutput(String stackName, String key)`
 
 And one for querying AWS Parameter Store directly without considering local configuration:
 
-**Scala signature:** `def parameterStore(key: String): Lookup`
+**Scala signature:** `def parameterStore(key: String): Lookup`  
 **Java signature:** `public static Lookup parameterStore(String key)`
 
 These auxilliary lookup methods can be used in the same fashion as `seek.aws.config.Lookup.lookup`.
