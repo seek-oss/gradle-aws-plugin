@@ -4,6 +4,7 @@ This plugin provides a means of orchestrating the provisioning of AWS infrastruc
 ## Table of Contents
 
   * [Quick Start](#quick-start)
+  * [Example](#full-example)
   * [The Plugins](#the-plugins)
      * [AWS Plugin](#aws-plugin)
      * [Config Plugin](#config-plugin)
@@ -14,7 +15,6 @@ This plugin provides a means of orchestrating the provisioning of AWS infrastruc
      * [S3 Tasks](#s3-tasks)
      * [CloudFormation Tasks](#cloudformation-tasks)
      * [Simple Systems Manager Tasks](#simple-systems-manager-tasks)
-  * [Full Example](#full-example)
 
 ## Quick Start
 
@@ -28,6 +28,10 @@ plugins {
 ```
 
 The latest versions of the `seek.aws` and `seek.cloudformation` plugins can be found [here](https://plugins.gradle.org/plugin/seek.aws) and [here](https://plugins.gradle.org/plugin/seek.cloudformation).
+
+## Example
+
+A full working example can be found in the [example](example) directory.
 
 ## The Plugins
 This repository contains three logically separate but closely related Gradle plugins: `seek.aws`, `seek.config`, and `seek.cloudformation`.
@@ -455,7 +459,3 @@ task subscribeTopic(type: SubscribeTopic) {
 The `SubscribeTopic` task can add an arbitrary number of subscriptions to an existing SNS topic. Each subscription is added by calling the `subscribe` method passing the subscription protocol and endpoint as arguments. These arguments can be hard-coded or use lookups.
 
 This task is safe to call multiple times as it will only add subscriptions which do not already exist.
-
-## Full Example
-
-A full working example of a project that uses this plugin can be found in the [example](example) directory.
