@@ -13,11 +13,11 @@ abstract class AwsTask extends DefaultTask with HasLazyProperties {
 
   setGroup("AWS")
 
-  private var region: Option[String] = None
-  def region(v: String): Unit = region = Option(v)
+  private var _region: Option[String] = None
+  def region(v: String): Unit = _region = Option(v)
 
-  private var roleArn: Option[String] = None
-  def roleArn(v: String): Unit = roleArn = Option(v)
+  private var _roleArn: Option[String] = None
+  def roleArn(v: String): Unit = _roleArn = Option(v)
 
   protected val logger = getLogger
 
@@ -28,6 +28,12 @@ abstract class AwsTask extends DefaultTask with HasLazyProperties {
   protected def run: IO[Unit]
 
   protected def buildClient[C](builder: AwsClientBuilder[_, C]): IO[C] =
-    client.build(builder, region.orElse(project.awsExt.region), roleArn.orElse(project.awsExt.roleArn))
+    client.build(builder, region, roleArn)
+
+  protected def region: Option[String] =
+    _region.orElse(project.awsExt.region)
+
+  protected  def roleArn: Option[String] =
+    _roleArn.orElse(project.awsExt.roleArn)
 }
 
