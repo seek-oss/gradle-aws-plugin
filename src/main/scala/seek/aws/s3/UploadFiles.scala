@@ -68,7 +68,7 @@ class UploadFiles extends Upload {
     }
 
   private def uploadAll(bucket: String, keyFileMap: Map[String, File]): Kleisli[IO, AmazonS3, Unit] =
-    keyFileMap.foldLeft(lift[IO, AmazonS3, Unit](IO.unit)) {
+    keyFileMap.foldLeft(liftF[IO, AmazonS3, Unit](IO.unit)) {
       case (z, (k, f)) => z.flatMap(_ => upload(bucket, k, f))
     }
 

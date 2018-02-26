@@ -40,11 +40,11 @@ class DeleteStacks extends AwsTask {
 
   private def deleteStacks(nameMatching: String, safetyOn: Boolean, safetyLimit: Int): Kleisli[IO, AmazonCloudFormation, List[Stack]] =
      Kleisli { c =>
-      describeStacks.run(c).filter(_.getStackName.matches(nameMatching)).runLog.flatMap { ss =>
+      describeStacks.run(c).filter(_.getStackName.matches(nameMatching)).compile.toList.flatMap { ss =>
         if (safetyOn && ss.size > safetyLimit)
           raiseError(s"Safety is on and the number of matching stacks (${ss.size}) exceeds the safety limit of ${safetyLimit}")
         else
-          ss.foldLeft(IO.unit)((z, s) => z.flatMap(_ => deleteStack(s.getStackName).run(c))).map(_ => ss.toList)
+          ss.foldLeft(IO.unit)((z, s) => z.flatMap(_ => deleteStack(s.getStackName).run(c))).map(_ => ss)
       }
     }
 
@@ -53,12 +53,12 @@ class DeleteStacks extends AwsTask {
 
   private def waitForStacks(stacks: List[Stack], timeout: Duration): Kleisli[IO, AmazonCloudFormation, Unit] =
     stacks match {
-      case Nil    => lift(IO.unit)
+      case Nil    => liftF(IO.unit)
       case h :: t =>
         for {
-          t1 <- lift(IO(now.getEpochSecond.seconds))
+          t1 <- liftF(IO(now.getEpochSecond.seconds))
           _  <- waitForStack(h.getStackName, timeout)
-          t2 <- lift(IO(now.getEpochSecond.seconds))
+          t2 <- liftF(IO(now.getEpochSecond.seconds))
           _  <- waitForStacks(t, timeout - (t2 - t1))
         } yield ()
     }

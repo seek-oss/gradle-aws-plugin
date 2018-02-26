@@ -29,7 +29,7 @@ class CreateOrUpdateStack extends AwsTask {
     def inProgressError(ss: StackStatus) = raiseError(s"Can not update stack ${sd.name} as it has status ${ss.name}")
     stackStatus(sd.name).flatMap {
       case None | Some(DeleteComplete)     => create(sd)
-      case Some(ss: InProgressStackStatus) => lift(inProgressError(ss))
+      case Some(ss: InProgressStackStatus) => liftF(inProgressError(ss))
       case Some(_)                         => update(sd)
     }
   }

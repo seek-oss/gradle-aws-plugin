@@ -29,7 +29,7 @@ class SubscribeTopic extends AwsTask {
       t  <- topicArn.run
       c  <- buildClient(AmazonSNSClientBuilder.standard())
       ps <- gather(pending)
-      es <- listSubscriptions(t).run(c).runLog
+      es <- listSubscriptions(t).run(c).compile.toList
       _  <- addSubscriptions(t, uniquePending(ps, es).toList).run(c)
     } yield ()
 

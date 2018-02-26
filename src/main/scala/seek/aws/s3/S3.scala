@@ -20,7 +20,7 @@ sealed trait S3 {
     Kleisli { c => IO(c.putObject(bucket, key, file)) }
 
   def exists(bucket: String, keyOrPrefix: String): Kleisli[IO, AmazonS3, Boolean] =
-    listObjects(bucket, keyOrPrefix).mapF(_.head.runLog.map(_.nonEmpty))
+    listObjects(bucket, keyOrPrefix).mapF(_.head.compile.toList.map(_.nonEmpty))
 
   def existsAny(bucket: String, keys: List[String]): Kleisli[IO, AmazonS3, Boolean] =
     Kleisli { c =>
@@ -43,7 +43,7 @@ sealed trait S3 {
           .withQuiet(true)
           .withKeys(q: _*)
         IO(c.deleteObjects(req))
-      }.run
+      }.compile.drain
     }
 
   def listObjects(bucket: String, prefix: String): Kleisli[Stream[IO, ?], AmazonS3, S3ObjectSummary] =

@@ -73,7 +73,7 @@ abstract class Upload extends AwsTask {
       .through(io.file.writeAll(out.toPath))
     for {
       _ <- IO(out.getParentFile.mkdirs())
-      _ <- prg.run
+      _ <- prg.compile.drain
     } yield out
   }
 
