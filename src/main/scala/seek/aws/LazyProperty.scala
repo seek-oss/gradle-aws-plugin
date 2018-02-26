@@ -60,15 +60,15 @@ object LazyProperty {
     lp.runOptional.value.map(_.getOrElse(default))
   }
 
-  def renderAll[A](s: List[Any])(implicit p: Project): IO[List[A]] =
+  def renderAll[A](s: List[Any])(implicit p: Project, tag: ClassTag[A]): IO[List[A]] =
     s.foldRight(IO.pure(List.empty[A])) { (a, z) =>
       for {
-        h <- render(a, "")
+        h <- render[A](a, "")
         t <- z
       } yield h :: t
     }
 
-  def renderValues[K, A](m: Map[K, Any])(implicit p: Project): IO[Map[K, A]] =
+  def renderValues[K, A](m: Map[K, Any])(implicit p: Project, tag: ClassTag[A]): IO[Map[K, A]] =
     renderAll[A](m.values.toList).map(rs => m.keys.zip(rs).toMap)
 }
 

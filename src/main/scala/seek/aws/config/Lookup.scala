@@ -5,6 +5,8 @@ import cats.data.OptionT
 import cats.effect.IO
 import org.gradle.api._
 
+// TODO: Need a way to make this a Lookup[A] or something because
+// currently it's not possible to define a lazyProperty[Boolean] for eg that's looked up via config
 trait Lookup { self =>
 
   def key: String

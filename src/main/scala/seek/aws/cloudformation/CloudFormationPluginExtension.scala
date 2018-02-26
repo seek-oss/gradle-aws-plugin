@@ -34,7 +34,7 @@ class CloudFormationPluginExtension(implicit project: Project) {
   def tags(v: java.util.List[String]): Unit = lookupTags = v.asScala.toList
 
   private[cloudformation] def parameters: IO[Map[String, String]] =
-    renderValues(_parameters)
+    renderValues[String, String](_parameters)
 
   private[cloudformation] def tags: IO[Map[String, String]] =
     renderValues[String, String](_tags).flatMap { ts =>
