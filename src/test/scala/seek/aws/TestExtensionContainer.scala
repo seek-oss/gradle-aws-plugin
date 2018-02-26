@@ -40,4 +40,5 @@ class TestExtensionContainer(implicit project: Project) extends ExtensionContain
   def create[T](publicType: TypeOf[T], name: String, instanceType: Class[_ <: T], constructionArguments: AnyRef*) = ???
   def create[T](name: String, t: Class[T], constructionArguments: AnyRef*) = ???
   def findByType[T](t: TypeOf[T]) = ???
+  def getExtensionsSchema = ???
 }
