@@ -10,6 +10,7 @@ import seek.aws.config.Lookup
 import simulacrum.typeclass
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.concurrent.duration.{Duration, _}
 
 class CloudFormationPluginExtension(implicit project: Project) {
@@ -24,20 +25,32 @@ class CloudFormationPluginExtension(implicit project: Project) {
   private[cloudformation] val policyFile = lazyProperty[File]("policyFile")
   def policyFile(v: Any): Unit = policyFile.set(v)
 
-  private var _parameters: Map[String, Any] = Map.empty
-  def parameters(v: java.util.Map[String, Any]): Unit = _parameters = v.asScala.toMap
+  private val _parameters = mutable.HashMap.empty[String, Any]
+  def parameters(v: java.util.Map[String, Any]): Unit = {
+    _parameters.clear
+    _parameters ++= v.asScala
+  }
+  def addParameters(v: java.util.Map[String, Any]): Unit = _parameters ++= v.asScala
 
-  private var _tags: Map[String, Any] = Map.empty
-  def tags(v: java.util.Map[String, Any]): Unit = _tags = v.asScala.toMap
+  private val _tags = mutable.HashMap.empty[String, Any]
+  def tags(v: java.util.Map[String, Any]): Unit = {
+    _tags.clear
+    _tags ++= v.asScala
+  }
+  def addTags(v: java.util.Map[String, Any]): Unit = _tags ++= v.asScala
 
-  private var lookupTags: List[String] = List.empty
-  def tags(v: java.util.List[String]): Unit = lookupTags = v.asScala.toList
+  private val lookupTags = mutable.Set.empty[String]
+  def tags(v: java.util.List[String]): Unit = {
+    lookupTags.clear
+    lookupTags ++= v.asScala
+  }
+  def addTags(v: java.util.List[String]): Unit = lookupTags ++= v.asScala
 
   private[cloudformation] def parameters: IO[Map[String, String]] =
-    renderValues[String, String](_parameters)
+    renderValues[String, String](_parameters.toMap)
 
   private[cloudformation] def tags: IO[Map[String, String]] =
-    renderValues[String, String](_tags).flatMap { ts =>
+    renderValues[String, String](_tags.toMap).flatMap { ts =>
       lookupTags.foldLeft(IO.pure(ts)) { (z, t) =>
         for {
           zz <- z

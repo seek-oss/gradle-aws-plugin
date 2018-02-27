@@ -7,6 +7,9 @@ import org.gradle.api._
 
 // TODO: Need a way to make this a Lookup[A] or something because
 // currently it's not possible to define a lazyProperty[Boolean] for eg that's looked up via config
+// Lookup should really be a monad
+// Also TODO: Should be a convenience method for looking up immediately for use in e.g. Gradle interpolation
+// e.g. equiv of lookupUnsafe or lookup('foo').run
 trait Lookup { self =>
 
   def key: String
