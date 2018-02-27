@@ -58,7 +58,7 @@ object LookupConfig {
       fs <- sortedConfigFiles(p)
       os <- IO(fs.map(ConfigFactory.parseFile))
       c  <- IO(os.foldLeft(ConfigFactory.empty())(_ withFallback _))
-    } yield c
+    } yield c.resolve
 
   private def sortedConfigFiles(p: Project): IO[List[File]] = {
     def order(f1: File, f2: File) =
