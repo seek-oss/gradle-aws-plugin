@@ -46,7 +46,8 @@ object ConfigPluginExtension {
 
   private def resolve(key: String, naming: String)(implicit p: Project): IO[String] =
     notEmpty(LookupGradle(key).runOptional(p))
-      .orElse(notEmpty(LookupParameterStore(key).runOptional(p))).value
+      .orElse(notEmpty(LookupParameterStore(key).runOptional(p)))
+      .value
       .flatMap {
         case Some(v) => IO.pure(v)
         case None    => raiseError(
