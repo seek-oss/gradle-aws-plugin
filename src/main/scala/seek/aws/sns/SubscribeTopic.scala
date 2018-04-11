@@ -31,19 +31,24 @@ class SubscribeTopic extends AwsTask {
       ts = split(arns)
       c  <- buildClient(AmazonSNSClientBuilder.standard())
       ps <- gather(pending)
-      _ <- ts.foldLeft(IO.unit) { (z, t) =>
+      _  <- subscribeToTopics(ts, ps).run(c)
+    } yield ()
+
+  private def subscribeToTopics(ts: List[String], ps: List[PendingSubscription]): Kleisli[IO, AmazonSNS, Unit] =
+    Kleisli { c =>
+      ts.foldLeft(IO.unit) { (z, t) =>
         for {
           _  <- z
           es <- listSubscriptions(t).run(c).compile.toList
           _  <- addSubscriptions(t, uniquePending(ps, es).toList).run(c)
         } yield ()
-      }
-    } yield ()
+    }
+  }
 
   private def addSubscriptions(topicArn: String, ps: List[PendingSubscription]): Kleisli[IO, AmazonSNS, Unit] =
     Kleisli { c =>
       ps match {
-        case Nil => IO.unit
+        case Nil    => IO.unit
         case h :: t =>
           for {
             _ <- IO(c.subscribe(topicArn, h.protocol, h.endpoint))
@@ -53,13 +58,10 @@ class SubscribeTopic extends AwsTask {
     }
 
   private def uniquePending(pending: Seq[PendingSubscription], existing: Seq[Subscription]): Set[PendingSubscription] =
-    pending.toSet.diff(
-      existing
-        .map(s => PendingSubscription(s.getProtocol, s.getEndpoint))
-        .toSet)
+    pending.toSet.diff(existing.map(s => PendingSubscription(s.getProtocol, s.getEndpoint)).toSet)
 
-  private def split(s: String, sep: String = ","): Seq[String] =
-    s.split(sep).toSeq.map(_.trim).filterNot(_.isEmpty)
+  private def split(s: String, sep: String = ","): List[String] =
+    s.split(sep).toList.map(_.trim).filterNot(_.isEmpty)
 
   private case class PendingSubscription(protocol: String, endpoint: String)
 }
