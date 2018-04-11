@@ -14,8 +14,9 @@ class SubscribeTopic extends AwsTask {
 
   setDescription("Adds one or more subscriptions to an SNS topic if they do not exist")
 
-  private val topicArn = lazyProperty[String]("topicArn")
-  def topicArn(v: Any): Unit = topicArn.set(v)
+  private val topicArns = lazyProperty[String]("topicArns")
+  def topicArn(v: Any): Unit = topicArns.set(v)
+  def topicArns(v: Any): Unit = topicArns.set(v)
 
   private val pending: ArrayBuffer[IO[PendingSubscription]] = ArrayBuffer.empty
   def subscribe(protocol: Any, endpoint: Any): Unit =
@@ -26,12 +27,23 @@ class SubscribeTopic extends AwsTask {
 
   override def run: IO[Unit] =
     for {
-      t  <- topicArn.run
+      arns <- topicArns.run
+      ts = split(arns)
       c  <- buildClient(AmazonSNSClientBuilder.standard())
       ps <- gather(pending)
-      es <- listSubscriptions(t).run(c).compile.toList
-      _  <- addSubscriptions(t, uniquePending(ps, es).toList).run(c)
+      _  <- subscribeToTopics(ts, ps).run(c)
     } yield ()
+
+  private def subscribeToTopics(ts: List[String], ps: List[PendingSubscription]): Kleisli[IO, AmazonSNS, Unit] =
+    Kleisli { c =>
+      ts.foldLeft(IO.unit) { (z, t) =>
+        for {
+          _  <- z
+          es <- listSubscriptions(t).run(c).compile.toList
+          _  <- addSubscriptions(t, uniquePending(ps, es).toList).run(c)
+        } yield ()
+    }
+  }
 
   private def addSubscriptions(topicArn: String, ps: List[PendingSubscription]): Kleisli[IO, AmazonSNS, Unit] =
     Kleisli { c =>
@@ -47,6 +59,9 @@ class SubscribeTopic extends AwsTask {
 
   private def uniquePending(pending: Seq[PendingSubscription], existing: Seq[Subscription]): Set[PendingSubscription] =
     pending.toSet.diff(existing.map(s => PendingSubscription(s.getProtocol, s.getEndpoint)).toSet)
+
+  private def split(s: String, sep: String = ","): List[String] =
+    s.split(sep).toList.map(_.trim).filterNot(_.isEmpty)
 
   private case class PendingSubscription(protocol: String, endpoint: String)
 }
