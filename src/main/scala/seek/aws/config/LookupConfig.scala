@@ -62,7 +62,7 @@ object LookupConfig {
 
   private def sortedConfigFiles(p: Project): IO[List[File]] = {
     def order(f1: File, f2: File) =
-      if (f1.getName.matches(s"${p.cfgExt.commonConfigName}\\.${validConfigExtensions}")) false else true
+      if (f1.getName.matches(s"${p.cfgExt.commonConfigName}\\.${validConfigExtensions}")) true else false
     def filter(configName: String)(f: File) = {
       val validNames = List(s"${configName}\\.${validConfigExtensions}") ++
         (if (p.cfgExt.allowCommonConfig) List(s"${p.cfgExt.commonConfigName}\\.${validConfigExtensions}") else Nil)

@@ -60,6 +60,20 @@ class LookupConfigSpec extends SeekSpec {
       }
     }
 
+    "when a common config is used with an environment config and the same key exists in both files" - {
+      val project = buildGradleProject
+      project.getExtensions.lookupExt.files(new TestFileCollection(Set(
+        new File("src/test/resources/common.conf"),
+        new File("src/test/resources/development.conf")
+      )))
+
+      "environment file takes precedence for values with the same key" in {
+        LookupConfig("kebab-case-key").run(project).unsafeRunSync() should equal ("kebab-case-value")
+        LookupConfig("camelCaseKey").run(project).unsafeRunSync() should equal ("camelCaseValue")
+        LookupConfig("hello").run(project).unsafeRunSync() should equal ("mate")
+      }
+    }
+
     "when the lookup key cannot be found" - {
       val project = buildGradleProject
 
