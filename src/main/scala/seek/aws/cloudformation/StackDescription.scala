@@ -52,8 +52,10 @@ object StackDescription {
       val key = pascalToCamelCase(p.name)
       LookupGradle(key)
         .orElse(LookupMap(parameterOverrides, key))
+        .orElse(LookupMap(parameterOverrides, p.name))
         .orElse(LookupConfig(key))
-        .orElse(LookupParameterStore(key)).runOptional(project).value.flatMap {
+        .orElse(LookupParameterStore(key))
+        .orElse(LookupParameterStore(p.name)).runOptional(project).value.flatMap {
         case None if !p.required => z
         case None                => raiseError(s"Could not resolve stack parameter '${p.name}'")
         case Some(v)             => z.map(_ + (p.name -> v))
