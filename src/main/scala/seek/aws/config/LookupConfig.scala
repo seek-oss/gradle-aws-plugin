@@ -26,13 +26,14 @@ object LookupConfig {
   private val cache = mutable.Map.empty[Project, Config]
   private val validConfigExtensions = "(conf|json|properties)"
 
-  private def lookup(p: Project, key: String): OptionT[IO, String] = {
-    val config = cache.get(p) match {
-      case Some(c) => IO.pure(c)
-      case None    => updateCache(p)
-    }
-    liftF(config).flatMap(c => lookupConfig(c, keyVariations(key)))
-  }
+  private def lookup(p: Project, key: String): OptionT[IO, String] =
+    if (p.cfgExt.files.nonEmpty) {
+      val config = cache.get(p) match {
+        case Some(c) => IO.pure(c)
+        case None    => updateCache(p)
+      }
+      liftF(config).flatMap(c => lookupConfig(c, keyVariations(key)))
+    } else none
 
   private def lookupConfig(config: Config, keyVariations: List[String]): OptionT[IO, String] = {
     def go(ks: List[String]): IO[Option[String]] =
