@@ -23,7 +23,7 @@ class UploadFiles extends Upload {
   private val prefix = lazyProperty[String]("prefix", "")
   def prefix(v: Any): Unit = prefix.set(v)
 
-  private val failIfPrefixExists = lazyProperty[Boolean]("failIfPrefixExists", false)
+  private val failIfPrefixExists = lazyProperty[Boolean]("failIfPrefixExists", true)
   def failIfPrefixExists(v: Any): Unit = failIfPrefixExists.set(v)
 
   private val failIfObjectExists = lazyProperty[Boolean]("failIfObjectExists", false)

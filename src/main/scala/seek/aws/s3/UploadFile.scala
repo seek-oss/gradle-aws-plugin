@@ -21,7 +21,7 @@ class UploadFile extends Upload {
   private val key = lazyProperty[String]("key")
   def key(v: Any): Unit = key.set(v)
 
-  private val failIfObjectExists = lazyProperty[Boolean]("failIfObjectExists", false)
+  private val failIfObjectExists = lazyProperty[Boolean]("failIfObjectExists", true)
   def failIfObjectExists(v: Any): Unit = failIfObjectExists.set(v)
 
   override def run: IO[Unit] =
