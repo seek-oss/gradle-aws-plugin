@@ -81,8 +81,8 @@ task wrapper(type: Wrapper) {
 }
 
 pluginBundle {
-    website = 'https://github.com/SEEK-Jobs/gradle-aws-plugin'
-    vcsUrl = 'https://github.com/SEEK-Jobs/gradle-aws-plugin'
+    website = 'https://github.com/seek-oss/gradle-aws-plugin'
+    vcsUrl = 'https://github.com/seek-oss/gradle-aws-plugin'
     def pluginTags = ['SEEK', 'AWS', 'CloudFormation', 'Cloud', 'Config',
                       'Scala', 'Infrastructure', 'Deploy', 'Deployment', 'DevOps']
 
