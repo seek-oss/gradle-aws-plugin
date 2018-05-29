@@ -54,11 +54,14 @@ object LazyProperty {
     lp.run
   }
 
-  def render[A](a: Any, name: String, default: A)(implicit p: Project, tag: ClassTag[A]): IO[A] = {
+  def renderOptional[A](a: Any, name: String)(implicit p: Project, tag: ClassTag[A]): IO[Option[A]] = {
     val lp = lazyProperty[A](name)
     lp.set(a)
-    lp.runOptional.value.map(_.getOrElse(default))
+    lp.runOptional.value
   }
+
+  def render[A](a: Any, name: String, default: A)(implicit p: Project, tag: ClassTag[A]): IO[A] =
+    renderOptional(a, name).map(_.getOrElse(default))
 
   def renderAll[A](s: List[Any])(implicit p: Project, tag: ClassTag[A]): IO[List[A]] =
     s.foldRight(IO.pure(List.empty[A])) { (a, z) =>

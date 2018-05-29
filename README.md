@@ -452,10 +452,10 @@ The `seek.aws.sns.SubscribeTopic` task can be used to add one or more subscripti
 task subscribeTopic(type: SubscribeTopic) {
     topicArn lookup('alertTopic')
     subscribe('email', 'alerts@example.com')
-    subscribe(lookup('pagerProtocol'), lookup('pagerEndpoint'))
+    subscribe(lookup('pagerProtocol'), lookup('pagerEndpoint'), lookup('pagerFilterPolicy'))
 }
 ```
 
-The `SubscribeTopic` task can add an arbitrary number of subscriptions to an existing SNS topic. Each subscription is added by calling the `subscribe` method passing the subscription protocol and endpoint as arguments. These arguments can be hard-coded or use lookups.
+The `SubscribeTopic` task can add an arbitrary number of subscriptions to an existing SNS topic. Each subscription is added by calling the `subscribe` method passing the subscription protocol, endpoint and optionally a filter policy as arguments. These arguments can be hard-coded or use lookups.
 
 This task is safe to call multiple times as it will only add subscriptions which do not already exist.
