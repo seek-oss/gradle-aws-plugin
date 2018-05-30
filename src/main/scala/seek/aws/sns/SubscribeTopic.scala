@@ -53,43 +53,35 @@ class SubscribeTopic extends AwsTask {
   private def updateSubscriptions(topicArn: String, ps: List[PendingSubscription]): Kleisli[IO, AmazonSNS, Unit] =
     ps match {
       case Nil    => Kleisli.liftF(IO.unit)
-      case h :: t => for {
-        arn <- maybeSubscribeToTopic(topicArn, h)
-        _   <- maybeUpdateFilterPolicy(arn, h.filterPolicy)
-        _   <- updateSubscriptions(topicArn, t)
-      } yield ()
+      case h :: t =>
+        for {
+          arn <- maybeSubscribeToTopic(topicArn, h)
+          _   <- maybeUpdateFilterPolicy(arn, h.filterPolicy)
+          _   <- updateSubscriptions(topicArn, t)
+        } yield ()
     }
 
   private def maybeSubscribeToTopic(topicArn: String, ps: PendingSubscription): Kleisli[IO, AmazonSNS, String] =
     Kleisli { c =>
       ps.arn match {
         case Some(a) => IO.pure(a)
-        case None => IO(c.subscribe(topicArn, ps.protocol, ps.endpoint).getSubscriptionArn)
+        case None    => IO(c.subscribe(topicArn, ps.protocol, ps.endpoint).getSubscriptionArn)
       }
     }
 
   private def maybeUpdateFilterPolicy(arn: String, policy: Option[String]): Kleisli[IO, AmazonSNS, Unit] =
     Kleisli { c =>
       policy match {
-        case Some(p) => IO {
-          val r = new SetSubscriptionAttributesRequest(arn, "FilterPolicy", p)
-          c.setSubscriptionAttributes(r)
-        }
-        case None => IO.unit
+        case Some(p) => IO(c.setSubscriptionAttributes(new SetSubscriptionAttributesRequest(arn, "FilterPolicy", p)))
+        case None    => IO.unit
       }
     }
 
   private def merge(pending: List[PendingSubscription], existing: List[Subscription]): List[PendingSubscription] =
     existing.foldLeft(pending) { (z, es) =>
       z.zipWithIndex
-        .find(psi => {
-          val (ps, _) = psi
-          ps.protocol == es.getProtocol && ps.endpoint == es.getEndpoint
-        })
-        .map(psi => {
-          val (ps, i) = psi
-          z.updated(i, ps.copy(arn = Some(es.getSubscriptionArn)))
-        })
+        .find { case (ps, _) => ps.protocol == es.getProtocol && ps.endpoint == es.getEndpoint }
+        .map { case (ps, i) => z.updated(i, ps.copy(arn = Some(es.getSubscriptionArn))) }
         .getOrElse(z)
     }
 
