@@ -459,3 +459,24 @@ task subscribeTopic(type: SubscribeTopic) {
 The `SubscribeTopic` task can add an arbitrary number of subscriptions to an existing SNS topic. Each subscription is added by calling the `subscribe` method passing the subscription protocol, endpoint and optionally a filter policy as arguments. These arguments can be hard-coded or use lookups.
 
 This task is safe to call multiple times as it will only add subscriptions which do not already exist.
+
+#### `SetTopicAttributes`
+
+The `seek.aws.sns.SetTopicAttributes` task can be used to set or update one or more attributes on an SNS topic.
+
+**Example:**
+
+```gradle
+task enableAlertTopicErrorLogging(type: SetTopicAttributes) {
+    def errorsRoleArn = lookup('errorsRoleArn')
+    topicArn lookup('alertTopic')
+    attribute('LambdaFailureFeedbackRoleArn', errorsRoleArn)
+    attribute('SQSFailureFeedbackRoleArn', errorsRoleArn)
+    attribute('ApplicationFailureFeedbackRoleArn', errorsRoleArn)
+    attribute('HTTPFailureFeedbackRoleArn', errorsRoleArn)
+}
+```
+
+The `SetTopicAttributes` task can set an arbitrary number of attributes on an existing SNS topic. Each attribute is set by calling the `attribute` method passing the attribute name and value as arguments. These arguments can be hard-coded or use lookups.
+
+This task is safe to call multiple times as it will update the value of attributes that already exist.
