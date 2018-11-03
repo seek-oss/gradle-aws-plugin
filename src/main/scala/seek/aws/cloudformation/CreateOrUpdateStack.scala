@@ -22,7 +22,7 @@ class CreateOrUpdateStack extends AwsTask {
       sp <- StackDescription(project)
       c  <- buildClient(AmazonCloudFormationClientBuilder.standard())
       _  <- createOrUpdate(sp).run(c)
-      _  <- waitForStack(sp.name, to).run(c)
+      _  <- waitForStack(sp.name, to, logger = logger).run(c)
     } yield ()
 
   private def createOrUpdate(sd: StackDescription): Kleisli[IO, AmazonCloudFormation, Unit] = {

@@ -57,7 +57,7 @@ class DeleteStacks extends AwsTask {
       case h :: t =>
         for {
           t1 <- liftF(IO(now.getEpochSecond.seconds))
-          _  <- waitForStack(h.getStackName, timeout)
+          _  <- waitForStack(h.getStackName, timeout, logger = logger)
           t2 <- liftF(IO(now.getEpochSecond.seconds))
           _  <- waitForStacks(t, timeout - (t2 - t1))
         } yield ()
