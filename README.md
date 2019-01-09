@@ -274,6 +274,22 @@ The CloudFormation plugin applies the following tasks to the project:
 |`deleteStack`        |Deletes the stack defined in the `cloudFormation` extension if it exists
 |`verifyStack`        |Verifies that all stack parameters and tags specified in the template file are available and if they are prints them
 
+When running gradle with `--info` or `-i` the plugin will log CloudFormation stack events. This is especially useful for logfiles in CI builds. Here is an example:
+
+```
+$ ./gradlew :service1:createOrUpdateStack -i
+[...]
+> Task :service1:createOrUpdateStack
+Task ':service1:createOrUpdateStack' is not up-to-date because:
+  Task has not declared any outputs despite executing actions.
+2018-11-03 17:33:35 UPDATE_IN_PROGRESS                  AWS::CloudFormation::Stack               service1                       User Initiated
+2018-11-03 17:33:42 UPDATE_IN_PROGRESS                  AWS::ECS::TaskDefinition                 TaskDefinition                 Requested update requires the creation of a new physical resource; hence creating one.
+2018-11-03 17:33:42 UPDATE_IN_PROGRESS                  AWS::ECS::TaskDefinition                 TaskDefinition                 Resource creation Initiated
+2018-11-03 17:33:42 UPDATE_COMPLETE                     AWS::ECS::TaskDefinition                 TaskDefinition
+2018-11-03 17:33:44 UPDATE_IN_PROGRESS                  AWS::ECS::Service                        Service
+[...]
+```
+
 ## The Tasks
 
 This section provides an overview of the AWS tasks available.
