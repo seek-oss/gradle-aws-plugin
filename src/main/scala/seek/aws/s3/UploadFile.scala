@@ -25,26 +25,21 @@ class UploadFile extends Upload {
   private val key = lazyProperty[String]("key")
   def key(v: Any): Unit = key.set(v)
 
-  private val failIfObjectExists =
-    lazyProperty[Boolean]("failIfObjectExists", true)
+  private val failIfObjectExists = lazyProperty[Boolean]("failIfObjectExists", true)
   def failIfObjectExists(v: Any): Unit = failIfObjectExists.set(v)
 
   override def run: IO[Unit] =
     for {
-      f <- file.run
-      b <- bucket.run
-      k <- key.run
-      c <- buildClient(AmazonS3ClientBuilder.standard())
-      _ <- maybeFailIfObjectExists(b, k).run(c)
+      f  <- file.run
+      b  <- bucket.run
+      k  <- key.run
+      c  <- buildClient(AmazonS3ClientBuilder.standard())
+      _  <- maybeFailIfObjectExists(b, k).run(c)
       al <- acl.runOptional.value
-      g <- maybeInterpolate(f)
-      _ <- upload(b, k, g, al).run(c)
+      g  <- maybeInterpolate(f)
+      _  <- upload(b, k, g, al).run(c)
     } yield ()
 
-  private def maybeFailIfObjectExists(
-      bucket: String,
-      key: String): Kleisli[IO, AmazonS3, Unit] =
-    maybeRun(failIfObjectExists,
-             exists(bucket, key),
-             raiseError(s"Object ${key} already exists in bucket ${bucket}"))
+  private def maybeFailIfObjectExists(bucket: String, key: String): Kleisli[IO, AmazonS3, Unit] =
+    maybeRun(failIfObjectExists, exists(bucket, key), raiseError(s"Object $key already exists in bucket $bucket"))
 }
