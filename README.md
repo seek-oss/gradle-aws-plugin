@@ -418,7 +418,7 @@ task tearDown(type: DeleteStacks) {
 |Method        |Argument type|Description                                                 |Required|Default
 |--------------|-------------|------------------------------------------------------------|--------|-------
 |`nameMatching`|`String`     |Regex that is matched against all stacks in the region      |Yes     |-
-|`excluding`   |`String`     |Stack name to exclude from deletion  in the region          |No      |-
+|`excluding`   |`String`     |Stack to exclude in list returned by `nameMatching`         |No      |-
 |`safetyOn`    |`Boolean`    |Whether the safety switch is on                             |No      |`true`
 |`safetyLimit` |`Integer`    |Maximum number of stacks that can be deleted if safety is on|No      |3
 
