@@ -315,6 +315,7 @@ task upload(type: UploadFile) {
 |`file`              |`File`       |File to upload                               |Yes     |-
 |`bucket`            |`String`     |S3 bucket name                               |Yes     |-
 |`key`               |`String`     |S3 key                                       |Yes     |-
+|`acl`               |`String`     |Access Control List to apply to file         |No      |-
 |`failIfObjectExists`|`Boolean`    |Whether to fail fast if object already exists|No      |`false`
 |`interpolate`       |Various      |Interpolation rules described below          |No      |-
 
@@ -337,6 +338,7 @@ task upload(type: UploadFiles) {
 |`files`                  |`FileCollection`|Files to upload                                          |Yes     |-
 |`bucket`                 |`String`        |S3 bucket name                                           |Yes     |-
 |`prefix`                 |`String`        |S3 prefix                                                |Yes     |-
+|`acl`                    |`String`        |Access Control List to apply to file                     |No      |-
 |`failIfObjectExists`     |`Boolean`       |Whether to fail fast if an object already exists         |No      |`false`
 |`failIfPrefixExists`     |`Boolean`       |Whether to fail fast if the prefix already exists        |No      |`false`
 |`cleanPrefixBeforeUpload`|`Boolean`       |Whether to delete all files in the prefix prior to upload|No      |`false`
@@ -416,7 +418,8 @@ task tearDown(type: DeleteStacks) {
 |Method        |Argument type|Description                                                 |Required|Default
 |--------------|-------------|------------------------------------------------------------|--------|-------
 |`nameMatching`|`String`     |Regex that is matched against all stacks in the region      |Yes     |-
-|`safetyOn`    |`Boolean`    |Whether the saftey switch is on                             |No      |`true`
+|`excluding`   |`String`     |Stack name to exclude from deletion  in the region          |No      |-
+|`safetyOn`    |`Boolean`    |Whether the safety switch is on                             |No      |`true`
 |`safetyLimit` |`Integer`    |Maximum number of stacks that can be deleted if safety is on|No      |3
 
 
