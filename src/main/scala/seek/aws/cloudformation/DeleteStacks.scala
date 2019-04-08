@@ -27,25 +27,38 @@ class DeleteStacks extends AwsTask {
   private val safetyLimit = lazyProperty[Int]("safetyLimit", 3)
   def safetyLimit(v: Any): Unit = safetyLimit.set(v)
 
+  private val excluding = lazyProperty[String]("excluding")
+  def excluding(v: Any): Unit = excluding.set(v)
+
   override def run: IO[Unit] =
     for {
       n  <- nameMatching.run
       so <- safetyOn.run
       sl <- safetyLimit.run
+      ex <- excluding.runOptional.value
       to <- project.cfnExt.stackWaitTimeout
       c  <- buildClient(AmazonCloudFormationClientBuilder.standard())
-      ds <- deleteStacks(n, so, sl).run(c)
+      ds <- deleteStacks(n, ex, so, sl).run(c)
       _  <- waitForStacks(ds, to).run(c)
     } yield ()
 
-  private def deleteStacks(nameMatching: String, safetyOn: Boolean, safetyLimit: Int): Kleisli[IO, AmazonCloudFormation, List[Stack]] =
-     Kleisli { c =>
-      describeStacks.run(c).filter(_.getStackName.matches(nameMatching)).compile.toList.flatMap { ss =>
-        if (safetyOn && ss.size > safetyLimit)
-          raiseError(s"Safety is on and the number of matching stacks (${ss.size}) exceeds the safety limit of ${safetyLimit}")
-        else
-          ss.foldLeft(IO.unit)((z, s) => z.flatMap(_ => deleteStack(s.getStackName).run(c))).map(_ => ss)
-      }
+  private def deleteStacks(
+      nameMatching: String,
+      excluding: Option[String],
+      safetyOn: Boolean,
+      safetyLimit: Int): Kleisli[IO, AmazonCloudFormation, List[Stack]] =
+    Kleisli { c =>
+      describeStacks
+        .run(c)
+        .filter(s => s.getStackName.matches(nameMatching) && (excluding.isEmpty || !s.getStackName.equals(excluding.get)))
+        .compile
+        .toList
+        .flatMap { ss =>
+          if (safetyOn && ss.size > safetyLimit)
+            raiseError(s"Safety is on and the number of matching stacks (${ss.size}) exceeds the safety limit of $safetyLimit")
+          else
+            ss.foldLeft(IO.unit)((z, s) => z.flatMap(_ => deleteStack(s.getStackName).run(c))).map(_ => ss)
+        }
     }
 
   private def deleteStack(name: String): Kleisli[IO, AmazonCloudFormation, Unit] =
@@ -53,7 +66,7 @@ class DeleteStacks extends AwsTask {
 
   private def waitForStacks(stacks: List[Stack], timeout: Duration): Kleisli[IO, AmazonCloudFormation, Unit] =
     stacks match {
-      case Nil    => liftF(IO.unit)
+      case Nil => liftF(IO.unit)
       case h :: t =>
         for {
           t1 <- liftF(IO(now.getEpochSecond.seconds))
