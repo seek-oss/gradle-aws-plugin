@@ -8,7 +8,6 @@ import com.amazonaws.services.cloudformation.{AmazonCloudFormation, AmazonCloudF
 import org.gradle.api.{GradleException, Project}
 import seek.aws
 import seek.aws.instances._
-import seek.aws.syntax._
 
 import scala.collection.JavaConverters._
 

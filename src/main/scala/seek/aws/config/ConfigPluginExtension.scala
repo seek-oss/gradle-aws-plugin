@@ -6,7 +6,6 @@ import cats.data.OptionT._
 import cats.effect.IO
 import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
-import simulacrum.typeclass
 
 import scala.collection.mutable
 
@@ -59,6 +58,6 @@ object ConfigPluginExtension {
     o.flatMap(s => if (s == null || s.isEmpty) none else some(s))
 }
 
-@typeclass trait HasConfigPluginExtension[A] {
+trait HasConfigPluginExtension[A] {
   def cfgExt(a: A): ConfigPluginExtension
 }

@@ -9,7 +9,6 @@ import org.apache.commons.codec.Charsets.UTF_8
 import org.gradle.api.Project
 import seek.aws.cloudformation.CloudFormationTemplate.parseTemplateParameters
 import seek.aws.cloudformation.instances._
-import seek.aws.cloudformation.syntax._
 import seek.aws.config.{LookupConfig, LookupGradle, LookupMap, LookupParameterStore}
 
 import scala.io.Source.fromFile

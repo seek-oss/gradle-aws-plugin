@@ -10,7 +10,6 @@ import com.typesafe.config.ConfigException.Missing
 import com.typesafe.config.{Config, ConfigFactory}
 import org.gradle.api.Project
 import seek.aws.config.instances._
-import seek.aws.config.syntax._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable

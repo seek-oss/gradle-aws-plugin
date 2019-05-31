@@ -7,7 +7,6 @@ import cats.effect.IO
 import com.amazonaws.services.cloudformation.model._
 import com.amazonaws.services.cloudformation.{AmazonCloudFormation, AmazonCloudFormationClientBuilder}
 import seek.aws.cloudformation.instances._
-import seek.aws.cloudformation.syntax._
 
 import scala.collection.JavaConverters._
 

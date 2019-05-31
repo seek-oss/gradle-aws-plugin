@@ -12,11 +12,9 @@ import scala.collection.mutable
 
 package object aws {
 
-  object syntax extends HasAwsPluginExtension.ToHasAwsPluginExtensionOps
-
   object instances {
-    implicit val projectHasAwsPluginExtension = new HasAwsPluginExtension[Project] {
-      def awsExt(p: Project) =
+    implicit class ProjectHasAwsPluginExtension(p: Project) {
+      def awsExt =
         p.getExtensions.getByType(classOf[AwsPluginExtension])
     }
   }
