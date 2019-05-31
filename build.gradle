@@ -17,11 +17,11 @@ repositories {
 }
 
 ext {
-    awsVersion = '1.11.241'
-    catsVersion = '1.0.1'
-    catsEffectVersion = '0.9'
-    fs2Version = '0.10.2'
-    circeVersion = '0.9.1'
+    awsVersion = '1.11.490'
+    catsVersion = '1.1.0'
+    catsEffectVersion = '1.2.0'
+    fs2Version = '1.0.3'
+    circeVersion = '0.11.1'
     kindProjectorVersion = "0.9.9"
 }
 
