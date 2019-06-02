@@ -5,7 +5,6 @@ import com.amazonaws.client.builder.AwsClientBuilder
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import seek.aws.instances._
-import seek.aws.syntax._
 
 abstract class AwsTask extends DefaultTask with HasLazyProperties {
 

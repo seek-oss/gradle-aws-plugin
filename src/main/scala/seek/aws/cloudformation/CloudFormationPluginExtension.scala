@@ -7,8 +7,6 @@ import cats.effect.IO
 import org.gradle.api.Project
 import seek.aws.LazyProperty._
 import seek.aws.config.Lookup
-import simulacrum.typeclass
-
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.duration.{Duration, _}
@@ -65,7 +63,6 @@ class CloudFormationPluginExtension(implicit project: Project) {
     stackWaitTimeoutSeconds.run.map(_.toString.toInt.seconds)
 }
 
-@typeclass trait HasCloudFormationPluginExtension[A] {
+trait HasCloudFormationPluginExtension[A] {
   def cfnExt(a: A): CloudFormationPluginExtension
 }
-

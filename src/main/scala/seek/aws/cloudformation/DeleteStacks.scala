@@ -9,7 +9,6 @@ import cats.effect.IO
 import com.amazonaws.services.cloudformation.model.{DeleteStackRequest, Stack}
 import com.amazonaws.services.cloudformation.{AmazonCloudFormation, AmazonCloudFormationClientBuilder}
 import seek.aws.cloudformation.instances._
-import seek.aws.cloudformation.syntax._
 
 import scala.concurrent.duration.{Duration, _}
 

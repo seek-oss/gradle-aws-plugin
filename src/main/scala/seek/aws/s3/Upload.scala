@@ -15,10 +15,10 @@ import seek.aws.config.Lookup
 import scala.beans.BeanProperty
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.ExecutionContext
 import scala.util.matching.Regex
 
 abstract class Upload extends AwsTask {
-
   private type ShouldInterpolate = File => Boolean
   private val interpolations: ArrayBuffer[IO[Interpolation]] = ArrayBuffer.empty
   private val noOp = new Closure[Any](null) { override def run() = () }
@@ -62,15 +62,17 @@ abstract class Upload extends AwsTask {
     }
 
   private def runInterpolation(f: File, i: Interpolation): IO[File] = {
+    val ec = ExecutionContext.global
+    implicit val cs = IO.contextShift(ec)
     val rel = project.getProjectDir.toPath.relativize(f.toPath)
     val out = new File(s"${project.getBuildDir}/interpolated/${rel}")
-    val prg = io.file.readAll[IO](f.toPath, 4096)
+    val prg = io.file.readAll[IO](f.toPath, ec, 4096)
       .through(text.utf8Decode)
       .through(text.lines)
       .evalMap(searchAndReplace(i))
       .intersperse(System.lineSeparator)
       .through(text.utf8Encode)
-      .through(io.file.writeAll(out.toPath))
+      .through(io.file.writeAll(out.toPath, ec))
     for {
       _ <- IO(out.getParentFile.mkdirs)
       _ <- IO(out.delete)

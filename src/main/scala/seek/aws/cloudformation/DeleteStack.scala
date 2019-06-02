@@ -5,7 +5,6 @@ import cats.effect.IO
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder
 import com.amazonaws.services.cloudformation.model.DeleteStackRequest
 import seek.aws.cloudformation.instances._
-import seek.aws.cloudformation.syntax._
 
 class DeleteStack extends AwsTask {
   import CloudFormation._

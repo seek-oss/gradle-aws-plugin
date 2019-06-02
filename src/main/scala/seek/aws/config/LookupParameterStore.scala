@@ -8,7 +8,6 @@ import com.amazonaws.services.simplesystemsmanagement.model._
 import org.gradle.api.Project
 import seek.aws
 import seek.aws.instances._
-import seek.aws.syntax._
 
 case class LookupParameterStore(key: String) extends Lookup {
 

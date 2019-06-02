@@ -2,14 +2,13 @@ package seek.aws
 package cloudformation
 
 import java.io.File
+import java.nio.charset.StandardCharsets
 
 import cats.effect.IO
 import com.amazonaws.services.cloudformation.model.{Parameter, Tag}
-import org.apache.commons.codec.Charsets.UTF_8
 import org.gradle.api.Project
 import seek.aws.cloudformation.CloudFormationTemplate.parseTemplateParameters
 import seek.aws.cloudformation.instances._
-import seek.aws.cloudformation.syntax._
 import seek.aws.config.{LookupConfig, LookupGradle, LookupMap, LookupParameterStore}
 
 import scala.io.Source.fromFile
@@ -63,7 +62,7 @@ object StackDescription {
     })
 
   private def slurp(f: File): IO[String] =
-    IO(fromFile(f, UTF_8.name()).mkString)
+    IO(fromFile(f, StandardCharsets.UTF_8.name()).mkString)
 
   private def maybeSlurp(f: Option[File]): IO[Option[String]] =
     f match {

@@ -6,7 +6,6 @@ import cats.effect.IO
 import groovy.lang.Closure
 import org.gradle.api.Project
 import seek.aws.config.instances._
-import seek.aws.config.syntax._
 
 case class LookupGradle(key: String) extends Lookup {
   private val reservedKeywords = List("project")
