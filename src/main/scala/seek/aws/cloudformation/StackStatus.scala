@@ -22,17 +22,15 @@ case object DeleteFailed         extends FailedStackStatus { def name = "DELETE_
 case object UpdateRollbackFailed extends FailedStackStatus { def name = "UPDATE_ROLLBACK_FAILED" }
 case object ImportRollbackFailed extends FailedStackStatus { def name = "IMPORT_ROLLBACK_FAILED" }
 
-case object CreateInProgress                extends InProgressStackStatus { def name = "CREATE_IN_PROGRESS" }
-case object RollbackInProgress              extends InProgressStackStatus { def name = "ROLLBACK_IN_PROGRESS" }
-case object DeleteInProgress                extends InProgressStackStatus { def name = "DELETE_IN_PROGRESS" }
-case object UpdateInProgress                extends InProgressStackStatus { def name = "UPDATE_IN_PROGRESS" }
-case object ImportInProgress                extends InProgressStackStatus { def name = "IMPORT_IN_PROGRESS" }
-case object UpdateCompleteCleanupInProgress extends InProgressStackStatus { def name = "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS" }
-case object UpdateRollbackInProgress        extends InProgressStackStatus { def name = "UPDATE_ROLLBACK_IN_PROGRESS" }
-case object ImportRollbackInProgress        extends InProgressStackStatus { def name = "IMPORT_ROLLBACK_IN_PROGRESS" }
-case object UpdateRollbackCompleteCleanupInProgress extends InProgressStackStatus {
-  def name = "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS"
-}
+case object CreateInProgress                        extends InProgressStackStatus { def name = "CREATE_IN_PROGRESS" }
+case object RollbackInProgress                      extends InProgressStackStatus { def name = "ROLLBACK_IN_PROGRESS" }
+case object DeleteInProgress                        extends InProgressStackStatus { def name = "DELETE_IN_PROGRESS" }
+case object UpdateInProgress                        extends InProgressStackStatus { def name = "UPDATE_IN_PROGRESS" }
+case object ImportInProgress                        extends InProgressStackStatus { def name = "IMPORT_IN_PROGRESS" }
+case object UpdateCompleteCleanupInProgress         extends InProgressStackStatus { def name = "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS" }
+case object UpdateRollbackInProgress                extends InProgressStackStatus { def name = "UPDATE_ROLLBACK_IN_PROGRESS" }
+case object ImportRollbackInProgress                extends InProgressStackStatus { def name = "IMPORT_ROLLBACK_IN_PROGRESS" }
+case object UpdateRollbackCompleteCleanupInProgress extends InProgressStackStatus { def name = "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS" }
 
 object StackStatus {
   val AllStatuses = List(
