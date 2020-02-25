@@ -7,6 +7,7 @@ import cats.data.Kleisli
 import cats.effect.IO
 import com.amazonaws.services.s3.model.AccessControlList
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
+import scala.collection.JavaConverters._
 
 class UploadFile extends Upload {
   import S3._
@@ -28,6 +29,9 @@ class UploadFile extends Upload {
   private val failIfObjectExists = lazyProperty[Boolean]("failIfObjectExists", true)
   def failIfObjectExists(v: Any): Unit = failIfObjectExists.set(v)
 
+  private val tags = lazyProperty[java.util.LinkedHashMap[String, Any]]("tags")
+  def tags(v: Any): Unit = tags.set(v)
+
   override def run: IO[Unit] =
     for {
       f  <- file.run
@@ -36,8 +40,9 @@ class UploadFile extends Upload {
       c  <- buildClient(AmazonS3ClientBuilder.standard())
       _  <- maybeFailIfObjectExists(b, k).run(c)
       al <- acl.runOptional.value
+      ts <- tags.runOptional.map(_.asScala.toMap).value
       g  <- maybeInterpolate(f)
-      _  <- upload(b, k, g, al).run(c)
+      _  <- upload(b, k, g, al, ts).run(c)
     } yield ()
 
   private def maybeFailIfObjectExists(bucket: String, key: String): Kleisli[IO, AmazonS3, Unit] =

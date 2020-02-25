@@ -307,17 +307,21 @@ task upload(type: UploadFile) {
     file file('build.gradle')
     bucket lookup('bucketName')
     key 'uploads/build.gradle'
+    tags tags ([
+       'public': 'false'
+    ])
 }
 ```
 
-|Method              |Argument type|Description                                  |Required|Default
-|--------------------|-------------|---------------------------------------------|--------|-------
-|`file`              |`File`       |File to upload                               |Yes     |-
-|`bucket`            |`String`     |S3 bucket name                               |Yes     |-
-|`key`               |`String`     |S3 key                                       |Yes     |-
-|`acl`               |`String`     |Access Control List to apply to file         |No      |-
-|`failIfObjectExists`|`Boolean`    |Whether to fail fast if object already exists|No      |`false`
-|`interpolate`       |Various      |Interpolation rules described below          |No      |-
+|Method              |Argument type     |Description                                  |Required|Default
+|--------------------|------------------|---------------------------------------------|--------|-------
+|`file`              |`File`            |File to upload                               |Yes     |-
+|`bucket`            |`String`          |S3 bucket name                               |Yes     |-
+|`key`               |`String`          |S3 key                                       |Yes     |-
+|`acl`               |`String`          |Access Control List to apply to file         |No      |-
+|`failIfObjectExists`|`Boolean`         |Whether to fail fast if object already exists|No      |`false`
+|`interpolate`       |Various           |Interpolation rules described below          |No      |-
+|`tags`              |`Map[String, Any]`|S3 Object tags to apply to the file          |No      |-
 
 #### `UploadFiles`
 
@@ -330,19 +334,23 @@ task upload(type: UploadFiles) {
     files fileTree('config').include('*')
     bucket lookup('bucketName')
     prefix 'configs'
+    tags tags ([
+       'public': 'false'
+    ])
 }
 ```
 
-|Method                   |Argument type   |Description                                              |Required|Default
-|-------------------------|----------------|---------------------------------------------------------|--------|-------
-|`files`                  |`FileCollection`|Files to upload                                          |Yes     |-
-|`bucket`                 |`String`        |S3 bucket name                                           |Yes     |-
-|`prefix`                 |`String`        |S3 prefix                                                |Yes     |-
-|`acl`                    |`String`        |Access Control List to apply to file                     |No      |-
-|`failIfObjectExists`     |`Boolean`       |Whether to fail fast if an object already exists         |No      |`false`
-|`failIfPrefixExists`     |`Boolean`       |Whether to fail fast if the prefix already exists        |No      |`false`
-|`cleanPrefixBeforeUpload`|`Boolean`       |Whether to delete all files in the prefix prior to upload|No      |`false`
-|`interpolate`            |Various         |Interpolation rules described below                      |No      |-
+|Method                   |Argument type     |Description                                              |Required|Default
+|-------------------------|------------------|---------------------------------------------------------|--------|-------
+|`files`                  |`FileCollection`  |Files to upload                                          |Yes     |-
+|`bucket`                 |`String`          |S3 bucket name                                           |Yes     |-
+|`prefix`                 |`String`          |S3 prefix                                                |Yes     |-
+|`acl`                    |`String`          |Access Control List to apply to file                     |No      |-
+|`failIfObjectExists`     |`Boolean`         |Whether to fail fast if an object already exists         |No      |`false`
+|`failIfPrefixExists`     |`Boolean`         |Whether to fail fast if the prefix already exists        |No      |`false`
+|`cleanPrefixBeforeUpload`|`Boolean`         |Whether to delete all files in the prefix prior to upload|No      |`false`
+|`interpolate`            |Various           |Interpolation rules described below                      |No      |-
+|`tags`                   |`Map[String, Any]`|S3 Object tags to apply to the files                     |No      |-
 
 #### Interpolation
 

@@ -5,6 +5,7 @@ import java.io.File
 import cats.data.Kleisli
 import cats.effect.IO
 import com.amazonaws.AmazonServiceException
+import com.amazonaws.services.s3.model.Tag
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model._
 import fs2.Stream
@@ -16,12 +17,14 @@ sealed trait S3 {
 
   private val S3PageSize = 1000
 
-  def upload(bucket: String, key: String, file: File, acl: Option[AccessControlList]): Kleisli[IO, AmazonS3, Unit] =
+  def upload(bucket: String, key: String, file: File, acl: Option[AccessControlList], tags: Option[Map[String, Any]]): Kleisli[IO, AmazonS3, Unit] =
     Kleisli { c =>
       {
-        val req = acl match {
-          case Some(a) => new PutObjectRequest(bucket, key, file).withAccessControlList(a)
-          case None    => new PutObjectRequest(bucket, key, file)
+        val req = (acl, tags) match {
+          case (Some(a), Some(ts)) => new PutObjectRequest(bucket, key, file).withAccessControlList(a).withTagging(s3Tags(ts))
+          case (Some(a), None)     => new PutObjectRequest(bucket, key, file).withAccessControlList(a)
+          case (None, Some(ts))    => new PutObjectRequest(bucket, key, file).withTagging(s3Tags(ts))
+          case (None, None)        => new PutObjectRequest(bucket, key, file)
         }
         IO(c.putObject(req))
       }
@@ -73,6 +76,11 @@ sealed trait S3 {
       }
       pages.flatMap(emits(_))
     }
+
+  private def s3Tags(tags: Map[String, Any]): ObjectTagging =
+    new ObjectTagging(tags.toList.map {
+      case (k, v) => new Tag(k, v.toString)
+    }.asJava)
 }
 
 object S3 extends S3

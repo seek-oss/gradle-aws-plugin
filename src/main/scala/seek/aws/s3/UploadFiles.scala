@@ -9,6 +9,7 @@ import cats.effect.IO
 import com.amazonaws.services.s3.model.AccessControlList
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import org.gradle.api.file.FileCollection
+import scala.collection.JavaConverters._
 
 class UploadFiles extends Upload {
   import S3._
@@ -36,6 +37,9 @@ class UploadFiles extends Upload {
   private val cleanPrefixBeforeUpload = lazyProperty[Boolean]("cleanPrefixBeforeUpload", false)
   def cleanPrefixBeforeUpload(v: Any): Unit = cleanPrefixBeforeUpload.set(v)
 
+  private val tags = lazyProperty[java.util.LinkedHashMap[String, Any]]("tags")
+  def tags(v: Any): Unit = tags.set(v)
+
   override def run: IO[Unit] =
     for {
       fs <- files.run
@@ -45,11 +49,12 @@ class UploadFiles extends Upload {
       is <- maybeInterpolate(m.values.toList)
       mx <- IO.pure(m.keys.zip(is).toMap)
       al <- acl.runOptional.value
+      ts <- tags.runOptional.map(_.asScala.toMap).value
       c  <- buildClient(AmazonS3ClientBuilder.standard())
       _  <- maybeFailIfPrefixExists(b, p).run(c)
       _  <- maybeFailIfObjectExists(b, mx.keys.toList).run(c)
       _  <- maybeCleanPrefixBeforeUpload(b, p).run(c)
-      _  <- uploadAll(b, mx, al).run(c)
+      _  <- uploadAll(b, mx, al, ts).run(c)
     } yield ()
 
   private def maybeFailIfPrefixExists(bucket: String, prefix: String): Kleisli[IO, AmazonS3, Unit] =
@@ -70,9 +75,9 @@ class UploadFiles extends Upload {
       }
     }
 
-  private def uploadAll(bucket: String, keyFileMap: Map[String, File], acl: Option[AccessControlList]): Kleisli[IO, AmazonS3, Unit] =
+  private def uploadAll(bucket: String, keyFileMap: Map[String, File], acl: Option[AccessControlList], tags: Option[Map[String, Any]]): Kleisli[IO, AmazonS3, Unit] =
     keyFileMap.foldLeft(liftF[IO, AmazonS3, Unit](IO.unit)) {
-      case (z, (k, f)) => z.flatMap(_ => upload(bucket, k, f, acl))
+      case (z, (k, f)) => z.flatMap(_ => upload(bucket, k, f, acl, tags))
     }
 
   private def keyFileMap(files: FileCollection, prefix: String): Map[String, File] = {
