@@ -28,6 +28,14 @@ trait Lookup { self =>
       def runOptional(p: Project): OptionT[IO, String] =
         self.runOptional(p).orElse(that.runOptional(p))
     }
+
+  def map[A](f: String => A): Lookup = {
+    new Lookup {
+      def key: String = self.key
+      def runOptional(p: Project): OptionT[IO, String] =
+        self.runOptional(p).map(f(_).toString)
+    }
+  }
 }
 
 object Lookup {
