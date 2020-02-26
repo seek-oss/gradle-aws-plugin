@@ -17,7 +17,7 @@ class LazyProperty[A](name: String, default: Option[A] = None)(project: Project)
   def run(implicit tag: ClassTag[A]): IO[A] =
     thing match {
       case Some(v) => render(v)
-      case None    =>
+      case None =>
         default match {
           case Some(v) => IO.pure(v)
           case None    => IO.raiseError(new GradleException(s"Property ${name} has not been set"))
@@ -73,6 +73,9 @@ object LazyProperty {
 
   def renderValues[K, A](m: Map[K, Any])(implicit p: Project, tag: ClassTag[A]): IO[Map[K, A]] =
     renderAll[A](m.values.toList).map(rs => m.keys.zip(rs).toMap)
+
+  def renderValuesOptional[K, A](m: Map[K, Any])(implicit p: Project, tag: ClassTag[A]): IO[Option[Map[K, A]]] =
+    if (m.nonEmpty) renderValues(m).map(vs => Some(vs)) else IO.pure(None)
 }
 
 trait HasLazyProperties {

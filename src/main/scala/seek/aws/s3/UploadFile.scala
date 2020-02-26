@@ -7,7 +7,10 @@ import cats.data.Kleisli
 import cats.effect.IO
 import com.amazonaws.services.s3.model.AccessControlList
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
+import seek.aws.LazyProperty.renderValuesOptional
+
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 class UploadFile extends Upload {
   import S3._
@@ -29,8 +32,11 @@ class UploadFile extends Upload {
   private val failIfObjectExists = lazyProperty[Boolean]("failIfObjectExists", true)
   def failIfObjectExists(v: Any): Unit = failIfObjectExists.set(v)
 
-  private val tags = lazyProperty[java.util.LinkedHashMap[String, Any]]("tags")
-  def tags(v: Any): Unit = tags.set(v)
+  private val tags = mutable.HashMap.empty[String, Any]
+  def tags(v: java.util.Map[String, Any]): Unit = {
+    tags.clear
+    tags ++= v.asScala
+  }
 
   override def run: IO[Unit] =
     for {
@@ -40,7 +46,7 @@ class UploadFile extends Upload {
       c  <- buildClient(AmazonS3ClientBuilder.standard())
       _  <- maybeFailIfObjectExists(b, k).run(c)
       al <- acl.runOptional.value
-      ts <- tags.runOptional.map(_.asScala.toMap).value
+      ts <- renderValuesOptional[String, String](tags.toMap)
       g  <- maybeInterpolate(f)
       _  <- upload(b, k, g, al, ts).run(c)
     } yield ()

@@ -9,7 +9,10 @@ import cats.effect.IO
 import com.amazonaws.services.s3.model.AccessControlList
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import org.gradle.api.file.FileCollection
+import seek.aws.LazyProperty.renderValuesOptional
+
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 class UploadFiles extends Upload {
   import S3._
@@ -37,8 +40,11 @@ class UploadFiles extends Upload {
   private val cleanPrefixBeforeUpload = lazyProperty[Boolean]("cleanPrefixBeforeUpload", false)
   def cleanPrefixBeforeUpload(v: Any): Unit = cleanPrefixBeforeUpload.set(v)
 
-  private val tags = lazyProperty[java.util.LinkedHashMap[String, Any]]("tags")
-  def tags(v: Any): Unit = tags.set(v)
+  private val tags = mutable.HashMap.empty[String, Any]
+  def tags(v: java.util.Map[String, Any]): Unit = {
+    tags.clear
+    tags ++= v.asScala
+  }
 
   override def run: IO[Unit] =
     for {
@@ -49,7 +55,7 @@ class UploadFiles extends Upload {
       is <- maybeInterpolate(m.values.toList)
       mx <- IO.pure(m.keys.zip(is).toMap)
       al <- acl.runOptional.value
-      ts <- tags.runOptional.map(_.asScala.toMap).value
+      ts <- renderValuesOptional[String, String](tags.toMap)
       c  <- buildClient(AmazonS3ClientBuilder.standard())
       _  <- maybeFailIfPrefixExists(b, p).run(c)
       _  <- maybeFailIfObjectExists(b, mx.keys.toList).run(c)
