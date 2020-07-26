@@ -40,11 +40,14 @@ trait Lookup { self =>
 
 object Lookup {
   def lookup(key: String): Lookup =
-    LookupGradle(key).orElse(LookupConfig(key)).orElse(LookupParameterStore(key))
+    LookupGradle(key).orElse(LookupConfig(key)).orElse(LookupParameterStore(key)).orElse(LookupSecretsManager(key))
 
   def stackOutput(stackName: String, key: String): Lookup =
     LookupStackOutput(stackName, key)
 
   def parameterStore(key: String): Lookup =
     LookupParameterStore(key)
+
+  def secretsManager(key: String): Lookup =
+    LookupSecretsManager(key)
 }

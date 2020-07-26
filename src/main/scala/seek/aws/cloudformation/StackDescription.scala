@@ -9,7 +9,7 @@ import com.amazonaws.services.cloudformation.model.{Parameter, Tag}
 import org.gradle.api.Project
 import seek.aws.cloudformation.CloudFormationTemplate.parseTemplateParameters
 import seek.aws.cloudformation.instances._
-import seek.aws.config.{LookupConfig, LookupGradle, LookupMap, LookupParameterStore}
+import seek.aws.config.{LookupConfig, LookupGradle, LookupMap, LookupParameterStore, LookupSecretsManager}
 
 import scala.io.Source.fromFile
 
@@ -54,7 +54,10 @@ object StackDescription {
         .orElse(LookupMap(parameterOverrides, p.name))
         .orElse(LookupConfig(key))
         .orElse(LookupParameterStore(key))
-        .orElse(LookupParameterStore(p.name)).runOptional(project).value.flatMap {
+        .orElse(LookupParameterStore(p.name))
+        .orElse(LookupSecretsManager(key))
+        .orElse(LookupSecretsManager(p.name))
+        .runOptional(project).value.flatMap {
         case None if !p.required => z
         case None                => raiseError(s"Could not resolve stack parameter '${p.name}'")
         case Some(v)             => z.map(_ + (p.name -> v))

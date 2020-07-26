@@ -123,7 +123,7 @@ def lookup(key: String): Lookup
 public static Lookup lookup(String key)
 ```
 
-The `lookup` method returns a `Lookup` object which is executed at task runtime. When a `Lookup` is run it will attempt to resolve the specified key first by using Gradle properties, then by using configuration files, and finally by using the AWS Parameter Store. Lookup resolution order is discussed in more detail in the next section.
+The `lookup` method returns a `Lookup` object which is executed at task runtime. When a `Lookup` is run it will attempt to resolve the specified key first by using Gradle properties, then by using configuration files, AWS Parameter Store and finally by using the AWS Secrets Manager. Lookup resolution order is discussed in more detail in the next section.
 
 All AWS tasks can make use of lookups. For example, consider the following task definition:
 
@@ -150,7 +150,7 @@ def stackOutput(stackName: String, key: String): Lookup
 public static Lookup stackOutput(String stackName, String key)
 ```
 
-And one for querying AWS Parameter Store directly without considering local configuration:
+querying AWS Parameter Store directly without considering local configuration:
 
 **Scala signature:**
 
@@ -164,10 +164,25 @@ def parameterStore(key: String): Lookup
 public static Lookup parameterStore(String key)
 ```
 
+And one for querying AWS Secrets Manager directly without considering local configuration:
+
+**Scala signature:**
+
+```scala
+def secretsManager(key: String): Lookup
+```
+
+**Java signature:**
+
+```java
+public static Lookup secretsManager(String key)
+```
+
+
 These auxilliary lookup methods can be used in the same fashion as `seek.aws.config.Lookup.lookup`.
 
 #### Config Resolution
-When the Config plugin attempts to resolve a lookup it will considers a number of sources: Gradle properties, then configuration files, and finally AWS Parameter Store.
+When the Config plugin attempts to resolve a lookup it will considers a number of sources: Gradle properties, then configuration files,  AWS Parameter Store and finally AWS Secrets Manager.
 
 Consider the following Gradle file snippet:
 
@@ -261,8 +276,9 @@ CloudFormation template parameters are resolved in the following order:
 1. Optional map specified to `cloudFormation.parameters`
 1. Configuration files
 1. AWS Parameter Store
+1. AWS Secrets Manager
 
-If all stack parameters are defined in any combination of Gradle project properties, configuration files, and AWS Parameter Store then the `parameters` property of `cloudFormation` is not necessary.
+If all stack parameters are defined in any combination of Gradle project properties, configuration files, AWS Parameter Store and Secrets Manager then the `parameters` property of `cloudFormation` is not necessary.
 
 The `tags` property can be specified as a map (in the same fashion as the `parameters` property) or as a list of tag keys. If a list is specified each tag key is looked up using the Config plugin.
 
