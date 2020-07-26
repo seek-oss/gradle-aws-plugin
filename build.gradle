@@ -58,6 +58,8 @@ dependencies {
     compile "com.amazonaws:aws-java-sdk-ssm:${awsVersion}"
     compile "com.amazonaws:aws-java-sdk-sts:${awsVersion}"
     compile "com.amazonaws:aws-java-sdk-sns:${awsVersion}"
+    compile "com.amazonaws:aws-java-sdk-secretsmanager:${awsVersion}"
+
     compile "org.spire-math:kind-projector_${scalaBuildVersion}:${kindProjectorVersion}"
 
     compileOnly "com.github.dwickern:scala-nameof_${scalaBuildVersion}:1.0.3"
