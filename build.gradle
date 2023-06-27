@@ -17,7 +17,7 @@ repositories {
 }
 
 ext {
-    awsVersion = '1.11.490'
+    awsVersion = '1.12.497'
     catsVersion = '1.1.0'
     catsEffectVersion = '1.2.0'
     fs2Version = '1.0.3'
