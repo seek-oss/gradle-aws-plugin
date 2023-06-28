@@ -1,5 +1,5 @@
 # AWS Plugin for Gradle
-This plugin provides a means of orchestrating the provisioning of AWS infrastructure and managing configuration parameters across environments.
+This plugin provides a means of orchestrating the provisioning of AWS infrastructure and managing configuration parameters across environments..
 
 ## Table of Contents
 
