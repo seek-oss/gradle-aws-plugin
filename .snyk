@@ -1,0 +1,5 @@
+ignore:
+  SNYK-JAVA-ORGYAML-2806360:
+    - *:
+      reason: 'Snake yaml is used to parse yaml based Cloudformation templates. Those templates should not contain user input therefore this app is not vulnerable'
+      expires: '2024-01-01T00:00:00.000Z'
