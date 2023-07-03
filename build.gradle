@@ -1,5 +1,5 @@
 plugins {
-    id "com.gradle.plugin-publish" version "0.9.10"
+    id "com.gradle.plugin-publish" version "0.11.0"
     id 'com.github.maiflai.scalatest' version '0.19'
 }
 
@@ -85,7 +85,7 @@ compileTestScala.scalaCompileOptions.forkOptions.with {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.6'
+    gradleVersion = '4.9'
     distributionType = 'all'
 }
 
