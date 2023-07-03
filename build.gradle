@@ -85,7 +85,7 @@ compileTestScala.scalaCompileOptions.forkOptions.with {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.9'
+    gradleVersion = '4.8'
     distributionType = 'all'
 }
 
