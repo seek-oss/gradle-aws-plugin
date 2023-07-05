@@ -143,4 +143,6 @@ class TestProject(val properties: mutable.Map[String, String] = mutable.Map.empt
   def apply(closure: Closure[_]) = ???
   def apply(action: Action[_ >: ObjectConfigurationAction]) = ???
   def apply(options: util.Map[String, _]) = ???
+  def dependencyLocking(x$1: org.gradle.api.Action[_ >: org.gradle.api.artifacts.dsl.DependencyLockingHandler]): Unit = ???
+  def getDependencyLocking(): org.gradle.api.artifacts.dsl.DependencyLockingHandler = ???
 }
